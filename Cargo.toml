@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "bistro-contract",
+    "bistro-dao",
+    "bistro-service"
+]
