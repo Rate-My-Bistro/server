@@ -32,7 +32,15 @@ Build the server by running `cargo build` and then run it via `cargo run --bin b
 | bistro-dao       | Used for persistence                   |
 | bistro-service   | Used to serve the app                  |
 
-## 5 Contribution
+## 5 Open Topics
+
+1. Actix-Swagger is not ready for usage yet
+    * No support for Arrays
+    * Docs how  to serve this output incomplete
+
+--> Let's just implement the api without swagger for now
+
+## 6 Contribution
 
 Before you start contributing, read the following infos:
 
