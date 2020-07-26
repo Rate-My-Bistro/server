@@ -108,24 +108,24 @@ components:
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/Error'
+                        $ref: "#/components/schemas/Error"
 
         BadArgument:
             description: Given input type is incorrect
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/Error'
+                        $ref: "#/components/schemas/Error"
 
         MenuResponse:
-            description: "A single menu"
+            description: A single menu
             content:
                 application/json:
                     schema:
                         $ref: "#/components/schemas/Menu"'
 
         MenuListResponse:
-            description: "A list of menus that are served during the given time range"
+            description: A list of menus that are served during the given time range
             content:
                 application/json:
                     schema:
@@ -135,7 +135,7 @@ components:
       IdParam:
           in: path
           name: id
-          description: Parameter that describes a specific Entity Id
+          description: Parameter that describes a specific entity ID
           required: true
           schema:
             type: string
@@ -144,7 +144,7 @@ components:
       FromDateParam:
           in: query
           name: from
-          description: Inclusive Start Date Range in YYYY-MM-DD
+          description: Parameter that describes an inclusive start date range in YYYY-MM-DD
           required: true
           schema:
               type: string
@@ -153,7 +153,7 @@ components:
       ToDateParam:
           in: query
           name: to
-          description: Inclusive End Date Range in YYYY-MM-DD
+          description: Parameter that describes an inclusive end date range in YYYY-MM-DD
           required: true
           schema:
               type: string
