@@ -2,6 +2,6 @@
 
 members = [
     "bistro-contract",
-    "bistro-dao",
-    "bistro-service"
+    "bistro-service",
+    "bistro-dao"
 ]

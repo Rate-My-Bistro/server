@@ -20,4 +20,11 @@ TODO ``How to install Rust``
 
 Build the server by running `cargo build` and then run it via `cargo run --bin bistro-service`.
 
+## 4 Structure
+
+| Path             | Core Functionality                     |
+| :--------------- | :------------------------------------- |
+| bistro-contract  | Provides the SOA contract for entities |
+| bistro-dao       | Used for persistence                   |
+| bistro-service   | Used to serve the app                  |
 
