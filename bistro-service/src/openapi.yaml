@@ -23,6 +23,7 @@ paths:
                     $ref: "#/components/responses/BadArgument"
                 422:
                     $ref: "#/components/responses/UnprocessableEntity"
+
     /menus:
         get:
             operationId: retrieveMenusByDateRangeRequest
@@ -52,16 +53,54 @@ components:
             required:
                 - code
                 - message
+
         MenuList:
             type: array
             items:
               $ref: "#/components/schemas/Menu"
+
+        Price:
+            type: object
+            description: Combination of price and currency
+            properties:
+                value:
+                    type: float
+                    description: Value represented in 0.99
+                currency:
+                    type: string
+                    enum: [EUR]
+                    description: Set of currently supported currencies
+
         Menu:
             type: object
             properties:
                 id:
                     type: string
+                    format: uuid
                     description: A unique Identifier for the menu
+                servedAt:
+                    type: date
+                    description: Date when Menu is served in YYYY-MM-DD
+                name:
+                    type: string
+                    description: Name of Menu
+                supplements:
+                    type: array
+                    items:
+                      type: object
+                      description: A supplement which can be added to the menu
+                      properties:
+                          name:
+                              type: string
+                              description: Brief information about the supplement
+                          price:
+                              $ref: "#/components/schemas/Price"
+                image:
+                    type: string
+                    description: Url where an image of the Menu is located
+                price:
+                    $ref: "#/components/schemas/Price"
+
 
     responses:
         UnprocessableEntity:
@@ -70,18 +109,21 @@ components:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/Error'
+
         BadArgument:
             description: Given input type is incorrect
             content:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/Error'
+
         MenuResponse:
             description: "A single menu"
             content:
                 application/json:
                     schema:
                         $ref: "#/components/schemas/Menu"'
+
         MenuListResponse:
             description: "A list of menus that are served during the given time range"
             content:
@@ -98,6 +140,7 @@ components:
           schema:
             type: string
             format: uuid
+
       FromDateParam:
           in: query
           name: from
@@ -106,6 +149,7 @@ components:
           schema:
               type: string
               format: date
+
       ToDateParam:
           in: query
           name: to
