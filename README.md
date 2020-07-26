@@ -28,3 +28,29 @@ Build the server by running `cargo build` and then run it via `cargo run --bin b
 | bistro-dao       | Used for persistence                   |
 | bistro-service   | Used to serve the app                  |
 
+## 5 Contribution
+
+Before you start contributing, read the following infos:
+
+1. Please document any new code
+2. Express changes in semantic commit messages
+3. Align your changes with the existing coding style
+4. Better ask first and then start changing
+5. Use Templates
+6. Read the [Code of Conduct](./CODE_OF_CONDUCT.md)
+
+You found a bug somewhere in the code?
+
+--> Open an Issue
+
+You fixed a bug somewhere in the code?
+
+--> Open a pull request
+
+You got an awesome idea to improve the project? You hate your Bistro as much as I do and want to speed up development?
+
+--> The best way to support me in this project starts with a direct contact.
+Just send me an email and we will figure out a way on how to split up work :)
+
+--> ansgar.sa@gmail.com
+
