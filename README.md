@@ -14,7 +14,11 @@ This MircoService provides a REST API to serve the `Rate My Bistro: App`.
 
 ## 2 Prerequisites
 
-TODO ``How to install Rust``
+The development on this project requires Rust to be installed:
+
+```
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+```
 
 ## 3 Usage
 
