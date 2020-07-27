@@ -9,7 +9,7 @@ use serde::{Serialize, Deserialize};
 use std::fmt::{self, Formatter, Display};
 use chrono::{NaiveDate};
 use crate::price::Price;
-use crate::supplement::Supplement;
+use crate::supplement::{SupplementList};
 use crate::currency::Currency;
 
 mod naive_date_format {
@@ -37,7 +37,7 @@ mod naive_date_format {
             D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        NaiveDate::parse_from_str(&s, FORMAT).map_err(serde::de::Error::custom)
+        NaiveDate::parse_from_str(&s, FORMAT).map_err(Error::custom)
     }
 }
 
@@ -49,19 +49,8 @@ pub struct Menu {
     pub name: String,
     pub image: String,
     // Todo - Get Vectors running
-    pub supplements: Vec<Supplement>,
+    pub supplements: SupplementList,
     pub price: Price,
-}
-
-impl Display for Vec<Supplement> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{{ name: {name}, price: {price} }}",
-            name = self.name,
-            price = self.price
-        )
-    }
 }
 
 impl Display for Menu {
@@ -100,7 +89,7 @@ mod tests {
             served_at: NaiveDate::from_ymd(2020, 10, 10),
             name: String::from("Chili Noodles"),
             image: String::from("http://some-image.com/image.png"),
-            supplements: vec![],
+            supplements: SupplementList(vec![]),
             price: Price { value: 0.0, currency: Currency::EUR }
         };
         println!("{}", menu);
