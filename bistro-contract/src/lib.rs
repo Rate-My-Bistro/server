@@ -1,86 +1,21 @@
+
 extern crate serde;
 extern crate serde_json;
 
-mod supplement;
+mod supplements;
 mod price;
 mod currency;
-
-use serde::{Serialize, Deserialize};
-use std::fmt::{self, Formatter, Display};
-use chrono::{NaiveDate};
-use crate::price::Price;
-use crate::supplement::{SupplementList};
-use crate::currency::Currency;
-
-mod naive_date_format {
-    use chrono::{NaiveDate};
-    use serde::{self, Deserialize, Serializer, Deserializer};
-    use serde::de::Error;
-
-    const FORMAT: &'static str = "%YYYY-%mm-%dd";
-
-    pub fn serialize<S>(
-        date: &NaiveDate,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-    {
-        let s = format!("{}", date.format(FORMAT));
-        serializer.serialize_str(&s)
-    }
-
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<NaiveDate, D::Error>
-        where
-            D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        NaiveDate::parse_from_str(&s, FORMAT).map_err(Error::custom)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Menu {
-    pub id: String,
-    #[serde(with = "naive_date_format")]
-    pub served_at: NaiveDate,
-    pub name: String,
-    pub image: String,
-    // Todo - Get Vectors running
-    pub supplements: SupplementList,
-    pub price: Price,
-}
-
-impl Display for Menu {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "
-              {{
-                id: {id},
-                name: {name},
-                served_at: {served_at},
-                image: {image},
-                price: {price},
-                supplements: {supplements}
-              }}
-            ",
-            id = self.id,
-            served_at = self.served_at,
-            name = self.name,
-            image = self.image,
-            price = self.price,
-            supplements = self.supplements
-        )
-    }
-}
+mod menu;
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::supplements::{Supplement, SupplementList};
+    use crate::menu::Menu;
+    use crate::currency::Currency;
+    use crate::price::Price;
+    use chrono::NaiveDate;
 
     #[test]
     fn test_display() {
@@ -89,7 +24,8 @@ mod tests {
             served_at: NaiveDate::from_ymd(2020, 10, 10),
             name: String::from("Chili Noodles"),
             image: String::from("http://some-image.com/image.png"),
-            supplements: SupplementList(vec![]),
+            optional_supplements: SupplementList(vec![Supplement { name: String::from("Noodles"), price: Price { value: 2.88, currency: Currency::EUR } }]),
+            mandatory_supplements: SupplementList(vec![Supplement { name: String::from("Noodles"), price: Price { value: 2.88, currency: Currency::EUR } }]),
             price: Price { value: 0.0, currency: Currency::EUR }
         };
         println!("{}", menu);
