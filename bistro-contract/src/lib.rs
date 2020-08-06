@@ -2,10 +2,10 @@
 extern crate serde;
 extern crate serde_json;
 
-mod supplements;
-mod price;
-mod currency;
-mod menu;
+pub mod supplements;
+pub mod price;
+pub mod currency;
+pub mod menu;
 
 
 #[cfg(test)]

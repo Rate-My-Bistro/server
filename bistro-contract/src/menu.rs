@@ -10,7 +10,7 @@ mod naive_date_format {
     use serde::{self, Deserialize, Serializer, Deserializer};
     use serde::de::Error;
 
-    const FORMAT: &'static str = "%YYYY-%mm-%dd";
+    const FORMAT: &'static str = "%Y-%m-%d";
 
     pub fn serialize<S>(
         date: &NaiveDate,
