@@ -35,6 +35,7 @@ mod naive_date_format {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Menu {
     pub id: String,
     #[serde(with = "naive_date_format")]

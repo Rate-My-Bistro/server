@@ -20,6 +20,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| App::new()
         .service(index)
         .service(list_menus)
+        .service(list_menu_ids_by_date)
     )
     .bind("127.0.0.1:8080")?
     .run()

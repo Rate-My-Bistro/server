@@ -5,27 +5,42 @@ use arangors::{Connection, Database};
 use arangors::client::reqwest::ReqwestClient;
 use bistro_contract::menu::Menu;
 
-pub async fn connect() -> Option<Connection> {
-    let conn = Connection::establish_basic_auth("http://localhost:8529", "bistrouser", "bistropassword")
+async fn connect() -> Option<Connection> {
+    let conn = Connection::establish_basic_auth("http://localhost:8529", "root", "iamroot")
         .await
         .unwrap();
 
     Some(conn)
 }
 
-pub async fn get_bistro_db() -> Option<Database<ReqwestClient>> {
+async fn get_bistro_db() -> Option<Database<ReqwestClient>> {
     let conn = connect().await.unwrap();
     let db = conn.db("bistro").await.unwrap();
 
     Some(db)
 }
 
-pub async fn get_menus() -> Option<Vec<Menu>> {
+// TODO This is a helper and will be deleted:
+pub async fn get_all_menus() -> Option<Vec<Menu>> {
     let db = get_bistro_db().await.unwrap();
     let menus: Vec<Menu> = db
         .aql_str("FOR menu IN menus RETURN menu")
         .await
         .unwrap();
+
+    Some(menus)
+}
+
+pub async fn get_menu_ids_by_date_range(from: String, to: String) -> Option<Vec<String>> {
+    let db = get_bistro_db().await.unwrap();
+    let query_string = format!(
+        "SELECT id
+        FROM menus
+        WHERE servedAt BETWEEN '{}' AND '{}'",
+        from,
+        to
+    );
+    let menus: Vec<String> = db.aql_str(&*query_string).await.unwrap();
 
     Some(menus)
 }

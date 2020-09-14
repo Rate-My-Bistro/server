@@ -6,6 +6,7 @@ pub mod supplements;
 pub mod price;
 pub mod currency;
 pub mod menu;
+pub mod date_range;
 
 
 #[cfg(test)]
