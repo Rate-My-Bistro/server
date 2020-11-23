@@ -4,8 +4,8 @@ extern crate env_logger;
 extern crate bistro_contract;
 extern crate actix_web;
 
-mod service;
 mod endpoints;
+mod menu;
 
 use endpoints::*;
 use actix_web::{App, HttpServer};
@@ -19,7 +19,6 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| App::new()
         .service(index)
-        .service(list_menus)
         .service(list_menu_ids_by_date)
     )
     .bind("127.0.0.1:8080")?

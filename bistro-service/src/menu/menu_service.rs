@@ -10,4 +10,3 @@ pub async fn list_menu_ids_by_date_range(from: String, to: String) -> Option<Vec
 pub async fn list_menus() -> Option<Vec<Menu>> {
     bistro_dao::get_all_menus().await
 }
-

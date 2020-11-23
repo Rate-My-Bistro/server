@@ -1,7 +1,7 @@
 extern crate bistro_contract;
 extern crate arangors;
 
-use arangors::{Connection, Database};
+use arangors::{Connection, Database, AqlQuery};
 use arangors::client::reqwest::ReqwestClient;
 use bistro_contract::menu::Menu;
 
@@ -33,14 +33,13 @@ pub async fn get_all_menus() -> Option<Vec<Menu>> {
 
 pub async fn get_menu_ids_by_date_range(from: String, to: String) -> Option<Vec<String>> {
     let db = get_bistro_db().await.unwrap();
-    let query_string = format!(
-        "SELECT id
-        FROM menus
-        WHERE servedAt BETWEEN '{}' AND '{}'",
-        from,
-        to
-    );
-    let menus: Vec<String> = db.aql_str(&*query_string).await.unwrap();
+    let aql = AqlQuery::builder()
+        .query("FOR menu IN @@collection FILTER menu.servedAt >= @from AND menu.servedAt <= @to RETURN menu.id")
+        .bind_var("@collection", "menus")
+        .bind_var("from", from)
+        .bind_var("to", to)
+        .build();
 
+    let menus: Vec<String> = db.aql_query(aql).await.unwrap();
     Some(menus)
 }

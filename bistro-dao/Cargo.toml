@@ -8,5 +8,5 @@ edition = "2018"
 
 [dependencies]
 bistro-contract = { path = "../bistro-contract" }
-arangors = "0.4.2"
+arangors = "0.4.4"
 
