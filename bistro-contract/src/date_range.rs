@@ -1,44 +1,42 @@
-use serde::{Deserialize};
+use serde::{Serialize, Deserialize};
 use chrono::NaiveDate;
 
-mod naive_date_format {
-    use chrono::{NaiveDate};
-    use serde::{self, Deserialize, Serializer, Deserializer};
-    use serde::de::Error;
+mod date_serde {
+    use chrono::NaiveDate;
+    use serde::{self, Deserialize, Deserializer, Serializer};
 
-    const FORMAT: &'static str = "%Y-%m-%d";
-
-    pub fn serialize<S>(
-        optional_date: &Option<NaiveDate>,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(date: &Option<NaiveDate>, s: S) -> Result<S::Ok, S::Error>
         where
             S: Serializer,
     {
-        match optional_date {
-            Some(date) => {
-                let s = format!("{}", date.format(FORMAT));
-                serializer.serialize_str(&s)
-            },
-            None => None
+        if let Some(ref d) = *date {
+            return s.serialize_str(&d.format("%Y-%m-%d").to_string());
         }
+
+        s.serialize_none()
     }
 
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<Option<NaiveDate>, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<NaiveDate>, D::Error>
         where
             D: Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        NaiveDate::parse_from_str(&s, FORMAT).map_err(Error::custom)
+        let s: Option<String> = Option::deserialize(deserializer)?;
+        if let Some(s) = s {
+            return Ok(Some(
+                NaiveDate::parse_from_str(&s, "%Y-%m-%d").map_err(serde::de::Error::custom)?,
+            ));
+        }
+
+        Ok(None)
     }
 }
 
-#[derive(Deserialize,Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DateRange {
-    #[serde(skip_serializing_if = "Option::is_none", with = "naive_date_format")]
+    #[serde(default)]
+    #[serde(with = "date_serde")]
     pub from: Option<NaiveDate>,
-    #[serde(skip_serializing_if = "Option::is_none", with = "naive_date_format")]
+    #[serde(default)]
+    #[serde(with = "date_serde")]
     pub to: Option<NaiveDate>,
 }
