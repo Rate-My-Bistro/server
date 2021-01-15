@@ -1,7 +1,9 @@
-[workspace]
+[package]
+name = "rate-my-bistro-server"
+version = "0.1.0"
+#authors= TODO
+edition = "2018"
 
-members = [
-    "bistro-contract",
-    "bistro-service",
-    "bistro-dao"
-]
+[dependencies]
+rocket = "0.4"
+chrono = "0.4"
