@@ -11,9 +11,9 @@ fn main() {
     rocket::ignite()
         .mount("/", routes![test1, test2])
         .mount("/menus", routes![
-            menu::get_all_menus,
-            menu::get_menu_by_id,
-            menu::get_all_menus_by_date_range
+            menu::endpoints::get_all_menus,
+            menu::endpoints::get_menu_by_id,
+            menu::endpoints::get_all_menus_by_date_range
         ])
         .launch();
 }
