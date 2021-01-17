@@ -6,7 +6,7 @@ use crate::menu::entity::Menu;
 
 
 async fn connect() -> Option<Connection> {
-    let conn = Connection::establish_basic_auth("http://localhost:8529", "root", "iamroot")
+    let conn = Connection::establish_basic_auth("http://localhost:8529", "bistrouser", "bistropassword")
         .await
         .unwrap();
 
