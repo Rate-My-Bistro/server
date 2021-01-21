@@ -2,26 +2,43 @@ use std::io::Cursor;
 
 use chrono::NaiveDate;
 use tokio::runtime::Runtime;
-use rocket::{Response};
+use rocket::{Response, Request, response};
 use rocket::http::{ContentType, RawStr, Status};
 use crate::menu::repository::query_all_menus;
-use crate::menu::entity::Menu;
-use rocket::response::Debug;
+use crate::menu::entity::{Menu, MenuList};
+use rocket::response::{Debug, Responder};
+use rocket_contrib::json;
+use rocket_contrib::json::JsonValue;
+
+
+#[derive(Debug)]
+pub struct ApiResponse {
+    json: JsonValue,
+    status: Status,
+}
+
+impl<'r> Responder<'r> for ApiResponse {
+    fn respond_to(self, req: &Request) -> response::Result<'r> {
+        Response::build_from(self.json.respond_to(&req).unwrap())
+            .status(self.status)
+            .header(ContentType::JSON)
+            .ok()
+    }
+}
 
 #[get("/")]
-pub fn get_all_menus<'r>() -> Response<'r> {
+pub fn get_all_menus() -> ApiResponse {
     let menus = Runtime::new().unwrap().block_on(query_all_menus());
 
     match menus {
-        Some(_) => Response::build()
-            .header(ContentType::Plain)
-            .sized_body(Cursor::new("It works"))
-            .status(Status::Ok)
-            .finalize(),
-        _ =>  Response::build()
-            .status(Status::BadRequest)
-            .sized_body(Cursor::new("It fails"))
-            .finalize()
+        Some(_) => ApiResponse {
+            json: json!({"menus": menus }),
+            status: Status::Ok,
+        },
+        _ => ApiResponse {
+            json: json!({"error": {"short": "Cannot find any menu", "long": "There has to be a menu"}}),
+            status: Status::BadRequest,
+        }
     }
 }
 
@@ -46,6 +63,10 @@ pub fn get_all_menus_by_date_range<'r>(from: &RawStr, to: &RawStr) -> Response<'
 pub fn get_menu_by_id(menu_id: &RawStr) -> String {
     format!("menu id {}", menu_id.as_str())
 }
+
+// fn validate_date_string(date_string: &RawStr) -> Result<NaiveDate, ValidationError> {
+//     NaiveDate::parse_from_str(date_string.as_str(), "%Y-%m-%d").map_err(ValidationError)
+// }
 
 // return true if the date string has the following format: 2020-09-30
 fn is_date_string(date_string: &RawStr) -> bool {

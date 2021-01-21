@@ -2,7 +2,7 @@ extern crate arangors;
 
 use arangors::{Connection, Database};
 use arangors::client::reqwest::ReqwestClient;
-use crate::menu::entity::Menu;
+use crate::menu::entity::{Menu, MenuList};
 
 
 async fn connect() -> Option<Connection> {
@@ -20,12 +20,12 @@ async fn get_bistro_db() -> Option<Database<ReqwestClient>> {
     Some(db)
 }
 
-pub async fn query_all_menus() -> Option<Vec<Menu>> {
+pub async fn query_all_menus() -> Option<MenuList> {
     let db = get_bistro_db().await.unwrap();
     let menus: Vec<Menu> = db
         .aql_str("FOR menu IN menus RETURN menu")
         .await
         .unwrap();
 
-    Some(menus)
+    Some(MenuList(menus))
 }

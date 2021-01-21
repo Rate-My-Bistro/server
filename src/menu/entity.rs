@@ -62,3 +62,6 @@ pub struct Menu {
     // pub mandatory_supplements: SupplementList,
     pub price: f32,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MenuList(pub Vec<Menu>);
