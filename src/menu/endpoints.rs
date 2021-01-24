@@ -32,7 +32,7 @@ pub fn get_all_menus() -> ApiResponse {
 
     match menus {
         Some(_) => ApiResponse {
-            json: json!({"menus": menus }),
+            json: json!(menus),
             status: Status::Ok,
         },
         _ => ApiResponse {

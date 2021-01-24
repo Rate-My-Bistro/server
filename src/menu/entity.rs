@@ -44,7 +44,7 @@ mod naive_date_format {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Supplement {
     pub name: String,
-    pub price: f32,
+    pub price: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -60,7 +60,7 @@ pub struct Menu {
     // pub image: String,
     // pub optional_supplements: SupplementList,
     // pub mandatory_supplements: SupplementList,
-    pub price: f32,
+    pub price: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
