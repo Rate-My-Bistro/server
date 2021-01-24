@@ -45,6 +45,7 @@ pub struct Menu {
     pub date: NaiveDate,
     pub name: String,
     pub image: Option<String>,
+    pub low_kcal: bool,
     pub optional_supplements: Option<Vec<Supplement>>,
     pub mandatory_supplements: Option<Vec<Supplement>>,
     pub price: f64,
