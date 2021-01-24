@@ -1,20 +1,34 @@
-use std::io::Cursor;
-
 use chrono::NaiveDate;
 use tokio::runtime::Runtime;
 use rocket::{Response, Request, response};
 use rocket::http::{ContentType, RawStr, Status};
-use crate::menu::repository::query_all_menus;
+use crate::menu::repository::{query_all_menus, query_menus_by_range};
 use rocket::response::{Responder};
-// use rocket::request::{FromQuery};
+use rocket::request::{FromFormValue};
 use rocket_contrib::json;
 use rocket_contrib::json::JsonValue;
+use std::ops::Deref;
 
-// #[derive(Debug)]
-// pub struct DateRange {
-//     from: String,
-//     to: String,
-// }
+pub struct NaiveDateForm(NaiveDate);
+
+impl<'v> FromFormValue<'v> for NaiveDateForm {
+    type Error = &'v RawStr;
+
+    fn from_form_value(form_value: &'v RawStr) -> Result<NaiveDateForm, &'v RawStr> {
+        let decoded = form_value.url_decode().map_err(|_| form_value)?;
+        if let Ok(date) = NaiveDate::parse_from_str(&decoded, "%Y-%m-%d") {
+            return Ok(NaiveDateForm(date));
+        }
+        Err(form_value)
+    }
+}
+
+impl Deref for NaiveDateForm {
+    type Target = NaiveDate;
+    fn deref(&self) -> &NaiveDate {
+        &self.0
+    }
+}
 
 #[derive(Debug)]
 pub struct ApiResponse {
@@ -41,39 +55,30 @@ pub fn get_all_menus() -> ApiResponse {
             status: Status::Ok,
         },
         _ => ApiResponse {
-            json: json!({"error": {"short": "Cannot find any menu", "long": "There has to be a menu"}}),
+            json: json!({"error": {"short": "Failed to query for menus", "long": "Database operation wasn't successful"}}),
             status: Status::BadRequest,
         }
     }
 }
 
 #[get("/?<from>&<to>")]
-pub fn get_all_menus_by_date_range<'r>(from: &RawStr, to: &RawStr) -> Response<'r> {
-    if !is_date_string(from) || !is_date_string(to) {
-        Response::build()
-            .status(Status::BadRequest)
-            .sized_body(Cursor::new("'from' or 'to' is not a date string"))
-            .finalize()
-    } else {
-        Response::build()
-            .header(ContentType::Plain)
-            .sized_body(Cursor::new(format!("{}:{}", from, to)))
-            .status(Status::Ok)
-            .finalize()
+pub fn get_all_menus_by_date_range(from: NaiveDateForm, to: NaiveDateForm) -> ApiResponse {
+    let menus = Runtime::new().unwrap().block_on(query_menus_by_range(*from, *to));
+
+    match menus {
+        Some(_) => ApiResponse {
+            json: json!(menus),
+            status: Status::Ok,
+        },
+        _ => ApiResponse {
+            json: json!({"error": {"short": "Failed to query for menus", "long": "Given data range could not be used to query menus"}}),
+            status: Status::BadRequest,
+        }
     }
 }
-
 
 #[get("/<menu_id>")]
 pub fn get_menu_by_id(menu_id: &RawStr) -> String {
     format!("menu id {}", menu_id.as_str())
 }
 
-// fn validate_date_string(date_string: &RawStr) -> Result<NaiveDate, ValidationError> {
-//     NaiveDate::parse_from_str(date_string.as_str(), "%Y-%m-%d").map_err(ValidationError)
-// }
-
-// return true if the date string has the following format: 2020-09-30
-fn is_date_string(date_string: &RawStr) -> bool {
-    NaiveDate::parse_from_str(date_string.as_str(), "%Y-%m-%d").is_ok()
-}
