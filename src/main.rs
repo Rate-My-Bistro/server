@@ -3,13 +3,11 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::http::RawStr;
-
 mod menu;
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![test1, test2])
+        .mount("/", routes![test1])
         .mount("/menus", routes![
             menu::endpoints::get_all_menus,
             menu::endpoints::get_menu_by_id,
@@ -18,12 +16,7 @@ fn main() {
         .launch();
 }
 
-#[get("/test1")]
+#[get("/")]
 fn test1() -> &'static str {
-    "test1"
-}
-
-#[get("/test2?<name>")]
-fn test2(name: &RawStr) -> String {
-    return format!("Hello, {}!", name.as_str());
+    "It workz"
 }

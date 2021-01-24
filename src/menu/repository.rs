@@ -2,7 +2,7 @@ extern crate arangors;
 
 use arangors::{Connection, Database};
 use arangors::client::reqwest::ReqwestClient;
-use crate::menu::entity::{Menu, MenuList};
+use crate::menu::entity::{Menu};
 
 
 async fn connect() -> Option<Connection> {
