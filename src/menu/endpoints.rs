@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use tokio::runtime::Runtime;
 use rocket::{Response, Request, response};
 use rocket::http::{ContentType, RawStr, Status};
-use crate::menu::repository::{query_all_menus, query_menus_by_range};
+use crate::menu::repository::{query_all_menus, query_menus_by_range, query_menu_by_id};
 use rocket::response::{Responder};
 use rocket::request::{FromFormValue};
 use rocket_contrib::json;
@@ -78,7 +78,17 @@ pub fn get_all_menus_by_date_range(from: NaiveDateForm, to: NaiveDateForm) -> Ap
 }
 
 #[get("/<menu_id>")]
-pub fn get_menu_by_id(menu_id: &RawStr) -> String {
-    format!("menu id {}", menu_id.as_str())
+pub fn get_menu_by_id(menu_id: &RawStr) -> ApiResponse {
+    let menu = Runtime::new().unwrap().block_on(query_menu_by_id(menu_id));
+    match menu {
+        Some(menu) => ApiResponse {
+            json: json!(menu),
+            status: Status::Ok,
+        },
+        _ =>  ApiResponse {
+            json: json!({"error": {"short": "No menu found for id", "long": "Given id is not related to any known menu"}}),
+            status: Status::BadRequest,
+        }
+    }
 }
 

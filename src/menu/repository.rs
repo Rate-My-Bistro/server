@@ -43,3 +43,14 @@ pub async fn query_menus_by_range(from: NaiveDate, to: NaiveDate) -> Option<Vec<
     let menus: Vec<Menu> = db.aql_query(aql).await.unwrap();
     Some(menus)
 }
+
+pub async fn query_menu_by_id(id: &str) -> Option<Menu> {
+    let db = get_bistro_db().await.unwrap();
+    let collection = db.collection("menus").await.unwrap();
+    let response = collection.document(id).await;
+
+    match response {
+        Ok(menu) => menu.document,
+        _ => None
+    }
+}
