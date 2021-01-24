@@ -20,12 +20,12 @@ async fn get_bistro_db() -> Option<Database<ReqwestClient>> {
     Some(db)
 }
 
-pub async fn query_all_menus() -> Option<MenuList> {
+pub async fn query_all_menus() -> Option<Vec<Menu>> {
     let db = get_bistro_db().await.unwrap();
     let menus: Vec<Menu> = db
         .aql_str("FOR menu IN menus RETURN menu")
         .await
         .unwrap();
 
-    Some(MenuList(menus))
+    Some(menus)
 }

@@ -1,17 +1,6 @@
 use chrono::NaiveDate;
 use serde::{Serialize, Deserialize};
 
-// TODO
-// pub enum Currency {
-//     EUR,
-//     USD,
-// }
-//
-// pub struct Price {
-//     pub value: f64,
-//     pub currency: Currency,
-// }
-
 mod naive_date_format {
     use chrono::{NaiveDate};
     use serde::{self, Deserialize, Serializer, Deserializer};
@@ -48,18 +37,16 @@ pub struct Supplement {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SupplementList(pub Vec<Supplement>);
-
-#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Menu {
-    // pub id: String,
-    // #[serde(with = "naive_date_format")]
-    // pub served_at: NaiveDate,
+    #[serde(alias = "_key")]
+    pub id: String,
+    #[serde(with = "naive_date_format")]
+    pub date: NaiveDate,
     pub name: String,
-    // pub image: String,
-    // pub optional_supplements: SupplementList,
-    // pub mandatory_supplements: SupplementList,
+    pub image: Option<String>,
+    pub optional_supplements: Option<Vec<Supplement>>,
+    pub mandatory_supplements: Option<Vec<Supplement>>,
     pub price: f64,
 }
 
