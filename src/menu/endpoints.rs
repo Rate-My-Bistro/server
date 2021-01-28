@@ -47,45 +47,46 @@ impl<'r> Responder<'r> for ApiResponse {
 
 #[get("/")]
 pub fn get_all_menus() -> ApiResponse {
-    let menus = Runtime::new().unwrap().block_on(query_all_menus());
+    let menu_result = Runtime::new().unwrap().block_on(query_all_menus());
 
-    match menus {
-        Some(_) => ApiResponse {
+    match menu_result {
+        Ok(menus) => ApiResponse {
             json: json!(menus),
             status: Status::Ok,
         },
-        _ => ApiResponse {
+        Err(_) => ApiResponse {
             json: json!({"error": {"short": "Failed to query for menus", "long": "Database operation wasn't successful"}}),
-            status: Status::BadRequest,
+            status: Status::InternalServerError,
         }
     }
 }
 
 #[get("/?<from>&<to>")]
 pub fn get_all_menus_by_date_range(from: NaiveDateForm, to: NaiveDateForm) -> ApiResponse {
-    let menus = Runtime::new().unwrap().block_on(query_menus_by_range(*from, *to));
+    let menu_result = Runtime::new().unwrap().block_on(query_menus_by_range(*from, *to));
 
-    match menus {
-        Some(_) => ApiResponse {
+    match menu_result {
+        Ok(menus) => ApiResponse {
             json: json!(menus),
             status: Status::Ok,
         },
-        _ => ApiResponse {
+        Err(_) => ApiResponse {
             json: json!({"error": {"short": "Failed to query for menus", "long": "Given data range could not be used to query menus"}}),
-            status: Status::BadRequest,
+            status: Status::InternalServerError,
         }
     }
 }
 
 #[get("/<menu_id>")]
 pub fn get_menu_by_id(menu_id: &RawStr) -> ApiResponse {
-    let menu = Runtime::new().unwrap().block_on(query_menu_by_id(menu_id));
-    match menu {
-        Some(menu) => ApiResponse {
+    let menu_result = Runtime::new().unwrap().block_on(query_menu_by_id(menu_id));
+
+    match menu_result {
+        Ok(menu) => ApiResponse {
             json: json!(menu),
             status: Status::Ok,
         },
-        _ =>  ApiResponse {
+        Err(_) =>  ApiResponse {
             json: json!({"error": {"short": "No menu found for id", "long": "Given id is not related to any known menu"}}),
             status: Status::BadRequest,
         }

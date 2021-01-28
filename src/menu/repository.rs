@@ -4,6 +4,7 @@ use arangors::{Connection, Database, AqlQuery};
 use arangors::client::reqwest::ReqwestClient;
 use crate::menu::entity::{Menu};
 use chrono::NaiveDate;
+use self::arangors::ClientError;
 
 async fn connect() -> Option<Connection> {
     let conn = Connection::establish_basic_auth("http://localhost:8529", "bistrouser", "bistropassword")
@@ -20,17 +21,12 @@ async fn get_bistro_db() -> Option<Database<ReqwestClient>> {
     Some(db)
 }
 
-pub async fn query_all_menus() -> Option<Vec<Menu>> {
+pub async fn query_all_menus() -> Result<Vec<Menu>, ClientError> {
     let db = get_bistro_db().await.unwrap();
-    let menus: Vec<Menu> = db
-        .aql_str("FOR menu IN menus RETURN menu")
-        .await
-        .unwrap();
-
-    Some(menus)
+    db.aql_str("FOR menu IN menus RETURN menu").await
 }
 
-pub async fn query_menus_by_range(from: NaiveDate, to: NaiveDate) -> Option<Vec<Menu>> {
+pub async fn query_menus_by_range(from: NaiveDate, to: NaiveDate) -> Result<Vec<Menu>, ClientError> {
     let db = get_bistro_db().await.unwrap();
 
     let aql = AqlQuery::builder()
@@ -40,17 +36,16 @@ pub async fn query_menus_by_range(from: NaiveDate, to: NaiveDate) -> Option<Vec<
         .bind_var("to", to.to_string())
         .build();
 
-    let menus: Vec<Menu> = db.aql_query(aql).await.unwrap();
-    Some(menus)
+    db.aql_query(aql).await
 }
 
-pub async fn query_menu_by_id(id: &str) -> Option<Menu> {
+pub async fn query_menu_by_id(id: &str) -> Result<Menu, ClientError> {
     let db = get_bistro_db().await.unwrap();
     let collection = db.collection("menus").await.unwrap();
     let response = collection.document(id).await;
 
     match response {
-        Ok(menu) => menu.document,
-        _ => None
+        Ok(menu) => Ok(menu.document),
+        Err(e) => Err(e)
     }
 }
