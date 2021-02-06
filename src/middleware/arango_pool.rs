@@ -13,6 +13,7 @@ impl Deref for ArangoPool {
     }
 }
 
+// TODO Move this into global state of request by using a Fairing
 #[async_trait]
 impl<'a, 'r> FromRequest<'a, 'r> for ArangoPool {
     type Error = ();
@@ -25,6 +26,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for ArangoPool {
 }
 
 fn create_arango_pool() -> Pool<ArangoDBConnectionManager> {
+    warn!("Creating a new manager...");
     let manager = ArangoDBConnectionManager::new(
         "http://localhost:8529",
         "bistrouser",
