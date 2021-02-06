@@ -1,10 +1,10 @@
 extern crate arangors;
 
 use arangors::{Connection, Database, AqlQuery};
-use arangors::client::reqwest::ReqwestClient;
 use crate::menu::entity::{Menu};
 use chrono::NaiveDate;
 use self::arangors::ClientError;
+use self::arangors::client::surf::SurfClient;
 
 async fn connect() -> Option<Connection> {
     let conn = Connection::establish_basic_auth("http://localhost:8529", "bistrouser", "bistropassword")
@@ -14,7 +14,7 @@ async fn connect() -> Option<Connection> {
     Some(conn)
 }
 
-async fn get_bistro_db() -> Option<Database<ReqwestClient>> {
+async fn get_bistro_db() -> Option<Database<SurfClient>> {
     let conn = connect().await.unwrap();
     let db = conn.db("bistro").await.unwrap();
 

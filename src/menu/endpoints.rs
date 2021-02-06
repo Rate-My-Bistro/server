@@ -36,8 +36,8 @@ pub struct ApiResponse {
     status: Status,
 }
 
-impl<'r> Responder<'r> for ApiResponse {
-    fn respond_to(self, req: &Request) -> response::Result<'r> {
+impl<'r> Responder<'r, 'static> for ApiResponse {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
         Response::build_from(self.json.respond_to(&req).unwrap())
             .status(self.status)
             .header(ContentType::JSON)
@@ -46,8 +46,8 @@ impl<'r> Responder<'r> for ApiResponse {
 }
 
 #[get("/")]
-pub fn get_all_menus() -> ApiResponse {
-    let menu_result = Runtime::new().unwrap().block_on(query_all_menus());
+pub async fn get_all_menus() -> ApiResponse {
+    let menu_result = query_all_menus().await;
 
     match menu_result {
         Ok(menus) => ApiResponse {

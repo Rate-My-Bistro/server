@@ -1,8 +1,12 @@
-[development]
-address = "localhost"
+[debug]
+address = "127.0.0.1"
 port = 8001
-keep_alive = 5
-read_timeout = 5
-write_timeout = 5
-log = "normal"
-limits = { forms = 32768 }
+workers = 1
+keep_alive = 0
+log_level = "normal"
+
+[global.databases.arango]
+url = "http://localhost:8529"
+username = "bistrouser"
+password = "bistropassword"
+use_jwt = false

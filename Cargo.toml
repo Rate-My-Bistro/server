@@ -1,13 +1,22 @@
 [package]
 name = "rate-my-bistro-server"
 version = "0.1.0"
-#authors= TODO
+authors = ["Ansgar Sachs <ansgar.sa@gmail.com>, Rouven Himmelstein, Alicia Owen"]
+description = "Web server for the bistro application."
+documentation = "https://github.com/RateMyBistro/server/"
+homepage = "https://github.com/RateMyBistro/server/"
+repository = "https://github.com/RateMyBistro/server/"
+readme = "./README.md"
+keywords = ["rocket", "web", "bistro", "rating", "feedback"]
+license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
-rocket = "0.4"
-rocket_contrib = "0.4"
+rocket = { git = "https://github.com/SergioBenitez/Rocket" }
+rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket", features = ["databases"] }
 chrono = { version = "0.4", features = ["serde"]  }
-arangors = "0.4.5"
+arangors = { version = "0.4", features = ["surf_async"], default-features = false }
+#r2d2_arangors = { version = "0.2" }
+#r2d2 = { version = "0.8" }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "0.2", features = ["full"] }
