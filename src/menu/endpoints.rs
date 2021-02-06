@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use tokio::runtime::Runtime;
 use rocket::{Response, Request, response};
 use rocket::http::{ContentType, RawStr, Status};
 use crate::menu::repository::{query_all_menus, query_menus_by_range, query_menu_by_id};
@@ -62,8 +61,8 @@ pub async fn get_all_menus() -> ApiResponse {
 }
 
 #[get("/?<from>&<to>")]
-pub fn get_all_menus_by_date_range(from: NaiveDateForm, to: NaiveDateForm) -> ApiResponse {
-    let menu_result = Runtime::new().unwrap().block_on(query_menus_by_range(*from, *to));
+pub async fn get_all_menus_by_date_range(from: NaiveDateForm, to: NaiveDateForm) -> ApiResponse {
+    let menu_result = query_menus_by_range(*from, *to).await;
 
     match menu_result {
         Ok(menus) => ApiResponse {
@@ -78,8 +77,8 @@ pub fn get_all_menus_by_date_range(from: NaiveDateForm, to: NaiveDateForm) -> Ap
 }
 
 #[get("/<menu_id>")]
-pub fn get_menu_by_id(menu_id: &RawStr) -> ApiResponse {
-    let menu_result = Runtime::new().unwrap().block_on(query_menu_by_id(menu_id));
+pub async fn get_menu_by_id(menu_id: &RawStr) -> ApiResponse {
+    let menu_result = query_menu_by_id(menu_id).await;
 
     match menu_result {
         Ok(menu) => ApiResponse {
