@@ -1,9 +1,11 @@
-[debug]
-address = "127.0.0.1"
+[default]
+address = "0.0.0.0"
 port = 8001
+log_level = "normal"
+
+[debug]
 workers = 1
 keep_alive = 0
-log_level = "normal"
 
 [global.databases.arango]
 url = "http://localhost:8529"

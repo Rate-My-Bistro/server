@@ -12,11 +12,10 @@ license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
-rocket = { git = "https://github.com/SergioBenitez/Rocket" }
-rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket" }
-chrono = { version = "0.4", features = ["serde"]  }
 arangors = { version = "0.4", features = ["surf_async"], default-features = false }
+chrono = { version = "0.4", features = ["serde"]  }
 mobc-arangors = { version = "0.2", features = ["surf"], default-features = false }
 mobc = "0.7.0"
+rocket = { git = "https://github.com/SergioBenitez/Rocket" }
+rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket" }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "0.2", features = ["full"] }
