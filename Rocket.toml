@@ -2,13 +2,16 @@
 address = "0.0.0.0"
 port = 8001
 log_level = "normal"
+database_username = "bistrouser"
+database_password = "bistropassword"
+database_use_jwt = false
 
 [debug]
 workers = 1
 keep_alive = 0
+database_url = "http://localhost:8529"
 
-[global.databases.arango]
-url = "http://localhost:8529"
-username = "bistrouser"
-password = "bistropassword"
-use_jwt = false
+[release]
+database_url = "http://database:8529"
+
+
