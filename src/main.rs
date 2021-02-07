@@ -10,6 +10,7 @@ extern crate rocket_contrib;
 
 use rocket::fairing::AdHoc;
 use crate::config::AppConfig;
+use crate::middleware::arango_pool::provide_fairing_pool;
 
 mod menu;
 mod middleware;
@@ -28,6 +29,7 @@ fn rocket() -> rocket::Rocket {
             ],
         )
         .attach(AdHoc::config::<AppConfig>())
+        .attach(AdHoc::on_attach("arango", move |rocket| provide_fairing_pool(rocket)))
 }
 
 #[get("/")]

@@ -1,9 +1,10 @@
 use mobc::Pool;
 use mobc_arangors::ArangoDBConnectionManager;
-use rocket::request::FromRequest;
-use rocket::{request, Request};
+use rocket::request::{FromRequest, Outcome};
+use rocket::{Request, Rocket};
 use std::ops::Deref;
 use crate::config::AppConfig;
+use rocket::http::Status;
 
 pub struct ArangoPool(Pool<ArangoDBConnectionManager>);
 
@@ -14,20 +15,23 @@ impl Deref for ArangoPool {
     }
 }
 
-// TODO Move this into global state of request by using a Fairing
 #[async_trait]
 impl<'a, 'r> FromRequest<'a, 'r> for ArangoPool {
     type Error = ();
 
-    async fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
-        let pool = request.local_cache(|| create_arango_pool());
-
-        request::Outcome::Success(ArangoPool(pool.clone()))
+    async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
+        match request.managed_state::<Pool<ArangoDBConnectionManager>>() {
+            Some(pool) => Outcome::Success(ArangoPool(pool.clone())),
+            None => {
+                error_!("Missing database fairing for arango");
+                Outcome::Failure((Status::InternalServerError, ()))
+            }
+        }
     }
 }
 
-fn create_arango_pool() -> Pool<ArangoDBConnectionManager> {
-    warn!("Creating a new manager...");
+pub async fn provide_fairing_pool(rocket: Rocket) -> Result<Rocket, Rocket> {
+    info!("📀 Creating arango connection pool");
 
     let figment = rocket::Config::figment();
     let config: AppConfig = figment.extract().expect("Expected a database configuration");
@@ -41,5 +45,5 @@ fn create_arango_pool() -> Pool<ArangoDBConnectionManager> {
     );
     let pool = Pool::builder().max_open(20).build(manager);
 
-    pool
+    Ok(rocket.manage( pool))
 }
