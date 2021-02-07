@@ -6,25 +6,27 @@ use crate::menu::entity::Menu;
 use crate::middleware::arango_pool::ArangoPool;
 use arangors::{AqlQuery, Database};
 use chrono::NaiveDate;
+use crate::config::AppConfig;
 
-async fn get_connection(pool: ArangoPool) -> Database<SurfClient> {
+async fn get_connection(pool: ArangoPool, config: &AppConfig) -> Database<SurfClient> {
     let client = &*pool.get().await.unwrap();
-    let db = client.db("bistro").await.unwrap();
+    let db = client.db(&*config.database_collection).await.unwrap();
 
     db
 }
 
-pub async fn query_all_menus(pool: ArangoPool) -> Result<Vec<Menu>, ClientError> {
-    get_connection(pool)
+pub async fn query_all_menus(pool: ArangoPool, config: &AppConfig) -> Result<Vec<Menu>, ClientError> {
+    get_connection(pool, config)
         .await
         .aql_str("FOR menu IN menus RETURN menu")
         .await
 }
 
 pub async fn query_menus_by_range(
-    pool: ArangoPool,
     from: NaiveDate,
     to: NaiveDate,
+    pool: ArangoPool,
+    config: &AppConfig
 ) -> Result<Vec<Menu>, ClientError> {
     let aql = AqlQuery::builder()
         .query(
@@ -35,11 +37,11 @@ pub async fn query_menus_by_range(
         .bind_var("to", to.to_string())
         .build();
 
-    get_connection(pool).await.aql_query(aql).await
+    get_connection(pool, config).await.aql_query(aql).await
 }
 
-pub async fn query_menu_by_id(pool: ArangoPool, id: &str) -> Result<Menu, ClientError> {
-    let db = get_connection(pool).await;
+pub async fn query_menu_by_id(id: &str, pool: ArangoPool, config: &AppConfig) -> Result<Menu, ClientError> {
+    let db = get_connection(pool, config).await;
     let collection = db.collection("menus").await.unwrap();
     let response = collection.document(id).await;
 

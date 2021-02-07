@@ -8,19 +8,26 @@ extern crate rocket;
 // #[macro_use]
 extern crate rocket_contrib;
 
+use rocket::fairing::AdHoc;
+use crate::config::AppConfig;
+
 mod menu;
 mod middleware;
+mod config;
 
 #[launch]
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/", routes![index_handler]).mount(
-        "/menus",
-        routes![
-            menu::endpoints::get_all_menus,
-            menu::endpoints::get_menu_by_id,
-            menu::endpoints::get_all_menus_by_date_range
-        ],
-    )
+    rocket::ignite()
+        .mount("/", routes![index_handler])
+        .mount(
+            "/menus",
+            routes![
+                menu::endpoints::get_all_menus,
+                menu::endpoints::get_menu_by_id,
+                menu::endpoints::get_all_menus_by_date_range
+            ],
+        )
+        .attach(AdHoc::config::<AppConfig>())
 }
 
 #[get("/")]

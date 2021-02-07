@@ -3,17 +3,9 @@ use mobc_arangors::ArangoDBConnectionManager;
 use rocket::request::FromRequest;
 use rocket::{request, Request};
 use std::ops::Deref;
-use serde::Deserialize;
+use crate::config::AppConfig;
 
 pub struct ArangoPool(Pool<ArangoDBConnectionManager>);
-
-#[derive(Deserialize)]
-struct DatabaseConfig {
-    database_url: String,
-    database_username: String,
-    database_password: String,
-    database_use_jwt: bool
-}
 
 impl Deref for ArangoPool {
     type Target = Pool<ArangoDBConnectionManager>;
@@ -38,7 +30,7 @@ fn create_arango_pool() -> Pool<ArangoDBConnectionManager> {
     warn!("Creating a new manager...");
 
     let figment = rocket::Config::figment();
-    let config: DatabaseConfig = figment.extract().expect("Expected a database configuration");
+    let config: AppConfig = figment.extract().expect("Expected a database configuration");
 
     let manager = ArangoDBConnectionManager::new(
         &config.database_url,

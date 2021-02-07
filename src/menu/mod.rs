@@ -1,4 +1,4 @@
-pub mod endpoints;
-
 mod entity;
 mod repository;
+
+pub mod endpoints;
