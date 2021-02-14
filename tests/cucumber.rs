@@ -30,6 +30,7 @@ impl cucumber::World for MyWorld {
 
 mod example_steps {
     use cucumber::{Steps, t};
+    use isahc::get_async;
 
     pub fn steps() -> Steps<crate::MyWorld> {
         let mut builder: Steps<crate::MyWorld> = Steps::new();
@@ -47,12 +48,16 @@ mod example_steps {
                 "something goes (.*)",
                 t!(|world, _matches, _step| world),
             )
-            .given(
+            .given_async(
                 "I am trying out Cucumber",
-                |mut world: crate::MyWorld, _step| {
+                t!(|mut world: crate::MyWorld, _step| {
+                    let mut response = get_async("http://localhost:8001").await.unwrap();
+                    assert_eq!(response.status(), 200);
+                    assert_eq!(response.text().await, "It workz");
+
                     world.foo = "Some string".to_string();
                     world
-                },
+                }),
             )
             .when("I consider what I am doing", |mut world, _step| {
                 let new_string = format!("{}.", &world.foo);
