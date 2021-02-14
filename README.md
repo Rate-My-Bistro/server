@@ -22,7 +22,7 @@ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 
 ## 3 Usage
 
-Build the server by running `cargo build` and then run it via `cargo run --bin bistro-service`.
+Build the server by running `cargo build` and then run it via `cargo run`.
 
 ## 4 Structure
 

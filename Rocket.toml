@@ -17,6 +17,7 @@ database_url = "http://localhost:8529"
 
 [release]
 log_level = "normal"
+
 # Database
 database_url = "http://database:8529"
 
