@@ -12,11 +12,11 @@ pub struct Supplement {
 pub struct Menu {
     #[serde(alias = "_key")]
     pub id: String,
-    pub date: NaiveDate,
     pub name: String,
+    pub price: f64,
+    pub date: NaiveDate,
     pub image: Option<String>,
     pub low_kcal: bool,
     pub optional_supplements: Option<Vec<Supplement>>,
     pub mandatory_supplements: Option<Vec<Supplement>>,
-    pub price: f64,
 }
