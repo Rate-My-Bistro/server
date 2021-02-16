@@ -40,6 +40,24 @@ async fn create_menu(name: String, date: String) -> Vec<String> {
     get_bistro_db().await.aql_query(aql).await.unwrap()
 }
 
+async fn remove_unknown_menus(menu_ids: Vec<String>, menu_dates: Vec<NaiveDate>) -> Vec<String> {
+    let aql = AqlQuery::builder()
+        .query(r#"
+             FOR m IN menus
+             FILTER m._key NOT IN @ids
+             FILTER m.date >= @earliest && m.date <= @latest
+             REMOVE { _key: m._key } IN menus
+             LET removed = OLD
+             RETURN removed._key
+        "#)
+        .bind_var("ids", menu_ids)
+        .bind_var("earliest", menu_dates.first().unwrap().to_string())
+        .bind_var("latest", menu_dates.last().unwrap().to_string())
+        .build();
+
+    get_bistro_db().await.aql_query(aql).await.unwrap()
+}
+
 pub fn steps() -> Steps<MyWorld> {
     let mut builder: Steps<MyWorld> = Steps::new();
 
@@ -79,15 +97,13 @@ pub fn steps() -> Steps<MyWorld> {
         .given_async(
             "no other menus exist (between/on) the given dates",
             t!(|mut world, step| {
-                    let table = step.table().unwrap().clone();
+                    let menu_ids: Vec<String> =world.menus.iter().map(|menu| menu.id.clone()).collect();
+                    // let earliest: NaiveDate = world.menus.into_iter().reduce(|a,b| if a.date < b.date { a.date } else { b.date });
+                    // let latest: NaiveDate = world.menus.into_iter().reduce(|a,b| if a.date > b.date { a.date } else { b.date });
+                    let mut dates: Vec<NaiveDate> = world.menus.iter().map(|menu| menu.date).collect();
+                    dates.sort();
 
-                    for row in table.rows.iter() {
-                        let name = row[0].to_owned();
-                        let date = row[1].to_owned();
-                        let insert_menus = create_menu(name.clone(), date.clone()).await;
-
-                        assert_eq!(insert_menus.len(), 1);
-                    }
+                    remove_unknown_menus(menu_ids, dates).await;
 
                     world
                 })

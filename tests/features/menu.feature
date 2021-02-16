@@ -1,6 +1,6 @@
-Feature: Example feature
+Feature: Menu API
 
-    Scenario: An example scenario
+    Scenario: Fetching menus by date range
         Given I got the following list of menus
             | Name        | Date       |
             | test_menu_1 | 2121-01-19 |
