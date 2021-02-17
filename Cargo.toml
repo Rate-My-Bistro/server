@@ -28,3 +28,4 @@ harness = false
 cucumber = { package = "cucumber_rust", version = "0.8", features = ["macros"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 isahc = { version = "1.1", features = ["json"] }
+toml = "0.5"

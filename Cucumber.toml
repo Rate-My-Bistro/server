@@ -1,0 +1,6 @@
+[database]
+url = "http://localhost:8529"
+name = "bistro"
+username = "bistrouser"
+password = "bistropassword"
+collection = "menus"

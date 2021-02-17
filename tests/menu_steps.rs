@@ -3,15 +3,16 @@ use arangors::client::surf::SurfClient;
 use chrono::NaiveDate;
 use cucumber::{Steps, t};
 use crate::world::{PersistedMenu, MyWorld};
+use crate::config::CucumberConfig;
 
-async fn get_bistro_db() -> Database<SurfClient> {
-    let conn = Connection::establish_jwt("http://localhost:8529", "bistrouser", "bistropassword").await.unwrap();
-    let db = conn.db("bistro").await.unwrap();
+async fn get_bistro_db(config: &CucumberConfig) -> Database<SurfClient> {
+    let conn = Connection::establish_jwt(&config.database.url, &config.database.username, &config.database.password).await.unwrap();
+    let db = conn.db(&config.database.name).await.unwrap();
 
     db
 }
 
-async fn create_menu(name: String, date: String) -> Vec<String> {
+async fn create_menu(config: &CucumberConfig, name: String, date: String) -> Vec<String> {
     let aql = AqlQuery::builder()
         .query(r#"
              INSERT {
@@ -37,10 +38,10 @@ async fn create_menu(name: String, date: String) -> Vec<String> {
         .bind_var("date", date)
         .build();
 
-    get_bistro_db().await.aql_query(aql).await.unwrap()
+    get_bistro_db(config).await.aql_query(aql).await.unwrap()
 }
 
-async fn remove_unknown_menus(menu_ids: Vec<String>, menu_dates: Vec<NaiveDate>) -> Vec<String> {
+async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, earliest: NaiveDate, latest: NaiveDate) -> Vec<String> {
     let aql = AqlQuery::builder()
         .query(r#"
              FOR m IN menus
@@ -51,11 +52,11 @@ async fn remove_unknown_menus(menu_ids: Vec<String>, menu_dates: Vec<NaiveDate>)
              RETURN removed._key
         "#)
         .bind_var("ids", menu_ids)
-        .bind_var("earliest", menu_dates.first().unwrap().to_string())
-        .bind_var("latest", menu_dates.last().unwrap().to_string())
+        .bind_var("earliest", earliest.to_string())
+        .bind_var("latest", latest.to_string())
         .build();
 
-    get_bistro_db().await.aql_query(aql).await.unwrap()
+    get_bistro_db(config).await.aql_query(aql).await.unwrap()
 }
 
 pub fn steps() -> Steps<MyWorld> {
@@ -80,7 +81,7 @@ pub fn steps() -> Steps<MyWorld> {
                     for row in table.rows.iter().skip(1) {
                         let name = row[0].to_owned();
                         let date = row[1].to_owned();
-                        let inserted_menu_ids = create_menu(name.clone(), date.clone()).await;
+                        let inserted_menu_ids = create_menu(&world.config, name.clone(), date.clone()).await;
 
                         assert_eq!(inserted_menu_ids.len(), 1);
 
@@ -95,15 +96,19 @@ pub fn steps() -> Steps<MyWorld> {
                 })
         )
         .given_async(
-            "no other menus exist (between/on) the given dates",
+            "No other menus exist (between/on) the given dates",
             t!(|mut world, step| {
                     let menu_ids: Vec<String> =world.menus.iter().map(|menu| menu.id.clone()).collect();
-                    // let earliest: NaiveDate = world.menus.into_iter().reduce(|a,b| if a.date < b.date { a.date } else { b.date });
-                    // let latest: NaiveDate = world.menus.into_iter().reduce(|a,b| if a.date > b.date { a.date } else { b.date });
+                    let earliest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a < b { a } else { b });
+                    let latest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a > b { a } else { b });
                     let mut dates: Vec<NaiveDate> = world.menus.iter().map(|menu| menu.date).collect();
                     dates.sort();
 
-                    remove_unknown_menus(menu_ids, dates).await;
+                    assert!(menu_ids.len() > 0, "Dont use this step if no menus were previously persisted");
+                    assert!(earliest.is_some(), "All menus are lacking a serving date");
+                    assert!(latest.is_some(), "All menus are lacking a serving date");
+
+                    remove_unknown_menus(&world.config, menu_ids, earliest.unwrap(), latest.unwrap()).await;
 
                     world
                 })

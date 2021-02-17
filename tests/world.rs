@@ -1,6 +1,7 @@
 use cucumber::async_trait;
 use std::{convert::Infallible, cell::RefCell};
 use chrono::NaiveDate;
+use crate::config::{CucumberConfig, parse_config};
 
 pub struct PersistedMenu {
     pub id: String,
@@ -9,7 +10,7 @@ pub struct PersistedMenu {
 }
 
 pub struct MyWorld {
-    pub foo: String,
+    pub config: CucumberConfig,
     pub bar: usize,
     pub some_value: RefCell<u8>,
     pub menus: Vec<PersistedMenu>,
@@ -29,8 +30,8 @@ impl cucumber::World for MyWorld {
 
     async fn new() -> Result<Self, Infallible> {
         Ok(Self {
-            foo: "wat".into(),
             bar: 0,
+            config: parse_config(),
             some_value: RefCell::new(0),
             menus: vec![]
         })

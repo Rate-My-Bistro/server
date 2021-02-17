@@ -1,3 +1,6 @@
+#![feature(iterator_fold_self)]
+
+mod config;
 mod world;
 mod menu_steps;
 
@@ -20,17 +23,14 @@ mod example_steps {
                     assert_eq!(response.status(), 200);
                     assert_eq!(response.text().unwrap(), "It workz");
 
-                    world.foo = "Some string".to_string();
                     world
                 }),
             )
             .when("I consider what I am doing", |mut world, _step| {
-                let new_string = format!("{}.", &world.foo);
-                world.foo = new_string;
                 world
             })
             .then("I am interested in ATDD", |world, _step| {
-                assert_eq!(world.foo, "Some string.");
+                assert!(world.menus.len() > 0, "My first assert.");
                 world
             })
             .then_regex(

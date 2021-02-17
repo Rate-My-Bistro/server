@@ -1,4 +1,5 @@
 #![feature(proc_macro_hygiene, decl_macro)]
+#![feature(iterator_fold_self)]
 
 #[macro_use]
 extern crate rocket;
