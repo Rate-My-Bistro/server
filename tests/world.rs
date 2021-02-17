@@ -1,36 +1,43 @@
-use cucumber::async_trait;
-use std::{convert::Infallible, cell::RefCell};
 use chrono::NaiveDate;
+use cucumber_rust::{async_trait, World, WorldInit};
+use std::{cell::RefCell, convert::Infallible};
+
 use crate::config::{CucumberConfig, parse_config};
 
+/// Simplified representation of a
+/// bistro menu
+///
 pub struct PersistedMenu {
     pub id: String,
     pub name: String,
     pub date: NaiveDate
 }
 
-pub struct MyWorld {
+/// This World represents the testing context
+/// that is passed into each gherkin step
+///
+#[derive(WorldInit)]
+pub struct BistroWorld {
     pub config: CucumberConfig,
+    pub foo: String,
     pub bar: usize,
     pub some_value: RefCell<u8>,
     pub menus: Vec<PersistedMenu>,
 }
 
-// impl MyWorld {
-//     async fn test_async_fn(&mut self) {
-//         *self.some_value.borrow_mut() = 123u8;
-//         self.bar = 123;
-//         self.menus = vec![];
-//     }
-// }
-
+/// Creates a fresh test context for the
+/// Bistro App. This context is used to
+/// manage the required state between
+/// each gherkin step
+///
 #[async_trait(?Send)]
-impl cucumber::World for MyWorld {
+impl World for BistroWorld {
     type Error = Infallible;
 
     async fn new() -> Result<Self, Infallible> {
         Ok(Self {
             bar: 0,
+            foo: "wat".into(),
             config: parse_config(),
             some_value: RefCell::new(0),
             menus: vec![]

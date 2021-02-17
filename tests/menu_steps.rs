@@ -1,34 +1,47 @@
-use arangors::{Database, Connection, AqlQuery};
+use arangors::{Database, Connection, AqlQuery, ClientError};
 use arangors::client::surf::SurfClient;
 use chrono::NaiveDate;
-use cucumber::{Steps, t};
-use crate::world::{PersistedMenu, MyWorld};
+use cucumber_rust::{when, given, gherkin};
+
 use crate::config::CucumberConfig;
+use crate::world::{BistroWorld, PersistedMenu};
 
-async fn get_bistro_db(config: &CucumberConfig) -> Database<SurfClient> {
-    let conn = Connection::establish_jwt(&config.database.url, &config.database.username, &config.database.password).await.unwrap();
-    let db = conn.db(&config.database.name).await.unwrap();
-
-    db
+/// Either returns a new connection to arango db for the given
+/// configuration or it forwards an error if no connection could
+/// be established
+///
+/// This method is used as a testing adapter in order to manage
+/// the persistence for menus
+///
+async fn get_bistro_db(config: &CucumberConfig) -> Result<Database<SurfClient>, ClientError> {
+    Connection::
+    establish_jwt(
+        &config.database.url,
+        &config.database.username,
+        &config.database.password
+    ).await?
+        .db(&config.database.name).await
 }
 
-async fn create_menu(config: &CucumberConfig, name: String, date: String) -> Vec<String> {
+/// Creates a new menu with a given name and serving date (e.g. 2020-01-19).
+///
+/// If any error occurs during connection establishment or insert operation,
+/// this error will be returned instead.
+///
+async fn create_menu(config: &CucumberConfig, name: String, date: String) -> Result<String, ClientError> {
     let aql = AqlQuery::builder()
         .query(r#"
              INSERT {
                 name: @name,
                 date: @date,
                 price: 7.99,
-                image: "http://some.image/image.png",
                 low_kcal: true,
-                optional_supplements: [{
-                    name: "Pommes",
-                    price: 10.99
-                }, {
-                    name: "Salat",
-                    price: 2.85
-                }],
-                mandatory_supplements: [{ name: "Schranke", price: 4.99 }]
+                image: "http://some.image/image.png",
+                mandatory_supplements: [{ name: "Schranke", price: 4.99 }],
+                optional_supplements: [
+                    { name: "Pommes", price: 10.99 },
+                    { name: "Salat", price: 2.85 }
+                ]
              }
              INTO menus
              LET inserted = NEW
@@ -38,10 +51,22 @@ async fn create_menu(config: &CucumberConfig, name: String, date: String) -> Vec
         .bind_var("date", date)
         .build();
 
-    get_bistro_db(config).await.aql_query(aql).await.unwrap()
+    let query_result: Result<Vec<String>, _> = get_bistro_db(config).await?
+        .aql_query(aql).await;
+
+    match query_result {
+        Ok(menu_ids) => Ok(menu_ids.first().unwrap().to_string()),
+        Err(e) => Err(e)
+    }
 }
 
-async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, earliest: NaiveDate, latest: NaiveDate) -> Vec<String> {
+/// Searches for menus having a serving date between (inclusive) given earliest and latest date.
+/// All found menus not having one of the given ids will be removed.
+///
+/// In case an error occurs during connection establishment or delete operation,
+/// this error will be returned instead.
+///
+async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, earliest: NaiveDate, latest: NaiveDate) -> Result<Vec<String>, ClientError> {
     let aql = AqlQuery::builder()
         .query(r#"
              FOR m IN menus
@@ -56,63 +81,55 @@ async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, ea
         .bind_var("latest", latest.to_string())
         .build();
 
-    get_bistro_db(config).await.aql_query(aql).await.unwrap()
+    get_bistro_db(config).await?
+        .aql_query(aql).await
 }
 
-pub fn steps() -> Steps<MyWorld> {
-    let mut builder: Steps<MyWorld> = Steps::new();
+#[given(regex = r"^I got a menu '(.*)' served at (.*)$")]
+async fn a_menu_is_served(world: &mut BistroWorld, name: String, served_at: String) {
+    let inserted_menu_id = create_menu(&world.config, name.clone(), served_at.clone()).await;
 
-    builder
-        // .given_regex_async(
-        //     r"^I got a menu (.*) served at (.*)$",
-        //     t!(|world, matches, _step| {
-        //             let insert_menus = create_menu(matches.first().unwrap().to_string(), matches.get(1).unwrap().to_string()).await;
-        //
-        //             assert_eq!(insert_menus.len(), 1);
-        //
-        //             world
-        //     })
-        // )
-        .given_async(
-            "I got the following list of menus",
-            t!(|mut world: MyWorld, step| {
-                    let table = step.table().unwrap().clone();
+    assert!(inserted_menu_id.is_ok(), "A new menu should have been created");
 
-                    for row in table.rows.iter().skip(1) {
-                        let name = row[0].to_owned();
-                        let date = row[1].to_owned();
-                        let inserted_menu_ids = create_menu(&world.config, name.clone(), date.clone()).await;
+    world.menus.push(PersistedMenu {
+        name,
+        id: inserted_menu_id.unwrap(),
+        date: NaiveDate::parse_from_str(&served_at, "%Y-%m-%d").unwrap()
+    });
+}
 
-                        assert_eq!(inserted_menu_ids.len(), 1);
+#[given("I got the following list of menus")]
+async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step) {
+    for row in step.table().unwrap().rows.iter().skip(1) {
+        let name = row[0].to_owned();
+        let date = row[1].to_owned();
 
-                        world.menus.push(PersistedMenu {
-                            id: inserted_menu_ids.first().unwrap().to_string(),
-                            name: name,
-                            date: NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
-                        })
-                    }
+        let inserted_menu_id = create_menu(&world.config, name.clone(), date.clone()).await;
+        assert!(inserted_menu_id.is_ok(), "A new menu should have been created");
 
-                    world
-                })
-        )
-        .given_async(
-            "No other menus exist (between/on) the given dates",
-            t!(|mut world, step| {
-                    let menu_ids: Vec<String> =world.menus.iter().map(|menu| menu.id.clone()).collect();
-                    let earliest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a < b { a } else { b });
-                    let latest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a > b { a } else { b });
-                    let mut dates: Vec<NaiveDate> = world.menus.iter().map(|menu| menu.date).collect();
-                    dates.sort();
+        world.menus.push(PersistedMenu {
+            name,
+            id: inserted_menu_id.unwrap(),
+            date: NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
+        })
+    }
+}
 
-                    assert!(menu_ids.len() > 0, "Dont use this step if no menus were previously persisted");
-                    assert!(earliest.is_some(), "All menus are lacking a serving date");
-                    assert!(latest.is_some(), "All menus are lacking a serving date");
+#[given("No other menus exist (between/on) the given dates")]
+async fn no_other_menu_exist(world: &mut BistroWorld) {
+    let menu_ids: Vec<String> = world.menus.iter().map(|menu| menu.id.clone()).collect();
+    let earliest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a < b { a } else { b });
+    let latest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a > b { a } else { b });
 
-                    remove_unknown_menus(&world.config, menu_ids, earliest.unwrap(), latest.unwrap()).await;
+    assert!(menu_ids.len() > 0, "Dont use this step if no menus were previously persisted");
+    assert!(earliest.is_some() && latest.is_some(), "All menus are lacking a serving date");
 
-                    world
-                })
-        );
+    let removed_ids = remove_unknown_menus(&world.config, menu_ids, earliest.unwrap(), latest.unwrap()).await;
+    assert!(removed_ids.is_ok(), "A new menu should have been created");
+}
 
-    builder
+#[when("I request the menu by its id")]
+async fn request_menu_by_id(world: &mut BistroWorld) {
+    assert_eq!(world.menus.len(), 1, "There are multiple menus known to the context");
+    /// TODO
 }
