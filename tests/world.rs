@@ -8,7 +8,7 @@ use crate::config::{CucumberConfig, parse_config};
 /// Simplified representation of a
 /// bistro menu
 ///
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Serialize,Deserialize,PartialEq,Eq,Debug)]
 pub struct PersistedMenu {
     pub id: String,
     pub name: String,
@@ -24,7 +24,8 @@ pub struct BistroWorld {
     pub foo: String,
     pub bar: usize,
     pub some_value: RefCell<u8>,
-    pub menus: Vec<PersistedMenu>,
+    pub expected_menus: Vec<PersistedMenu>,
+    pub actual_menus: Vec<PersistedMenu>
 }
 
 /// Creates a fresh test context for the
@@ -42,7 +43,8 @@ impl World for BistroWorld {
             foo: "wat".into(),
             config: parse_config(),
             some_value: RefCell::new(0),
-            menus: vec![]
+            expected_menus: vec![],
+            actual_menus: vec![]
         })
     }
 }

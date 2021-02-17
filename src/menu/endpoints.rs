@@ -47,7 +47,7 @@ pub async fn get_all_menus_by_date_range(
 
 #[get("/<menu_id>")]
 pub async fn get_menu_by_id(menu_id: &RawStr, pool: ArangoPool, config: State<'_, AppConfig>) -> ApiResponse {
-    let menu_result = query_menu_by_id( menu_id, pool, config.inner()).await;
+    let menu_result = query_menu_by_id(menu_id, pool, config.inner()).await;
 
     match menu_result {
         Ok(menu) => ApiResponse {
@@ -55,7 +55,7 @@ pub async fn get_menu_by_id(menu_id: &RawStr, pool: ArangoPool, config: State<'_
             status: Status::Ok,
         },
         Err(_) => ApiResponse {
-            json: json!({"error": {"short": "No menu found for id", "long": "Given id is not related to any known menu"}}),
+            json: json!({"error": {"short": format!("No menu found for id '{}'", menu_id), "long": "Given id is not related to any known menu"}}),
             status: Status::BadRequest,
         },
     }

@@ -1,11 +1,15 @@
 use arangors::{Database, Connection, AqlQuery, ClientError};
 use arangors::client::surf::SurfClient;
 use chrono::NaiveDate;
-use cucumber_rust::{when, given, gherkin};
+use cucumber_rust::{given, when, then, gherkin};
 use restson::{Error, RestClient, RestPath};
 
 use crate::config::CucumberConfig;
 use crate::world::{BistroWorld, PersistedMenu};
+
+impl RestPath<String> for PersistedMenu {
+    fn get_path(param: String) -> Result<String, Error> { Ok(format!("menus/{}", param)) }
+}
 
 /// Either returns a new connection to arango db for the given
 /// configuration or it forwards an error if no connection could
@@ -92,7 +96,7 @@ async fn a_menu_is_served(world: &mut BistroWorld, name: String, served_at: Stri
 
     assert!(inserted_menu_id.is_ok(), "A new menu should have been created");
 
-    world.menus.push(PersistedMenu {
+    world.expected_menus.push(PersistedMenu {
         name,
         id: inserted_menu_id.unwrap(),
         date: NaiveDate::parse_from_str(&served_at, "%Y-%m-%d").unwrap(),
@@ -108,7 +112,7 @@ async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step
         let inserted_menu_id = create_menu(&world.config, name.clone(), date.clone()).await;
         assert!(inserted_menu_id.is_ok(), "A new menu should have been created");
 
-        world.menus.push(PersistedMenu {
+        world.expected_menus.push(PersistedMenu {
             name,
             id: inserted_menu_id.unwrap(),
             date: NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap(),
@@ -118,9 +122,9 @@ async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step
 
 #[given("no other menus exist for the given dates (or in between)")]
 async fn no_other_menu_exist(world: &mut BistroWorld) {
-    let menu_ids: Vec<String> = world.menus.iter().map(|menu| menu.id.clone()).collect();
-    let earliest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a, b| if a < b { a } else { b });
-    let latest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a, b| if a > b { a } else { b });
+    let menu_ids: Vec<String> = world.expected_menus.iter().map(|menu| menu.id.clone()).collect();
+    let earliest: Option<NaiveDate> = world.expected_menus.iter().map(|menu| menu.date).fold_first(|a, b| if a < b { a } else { b });
+    let latest: Option<NaiveDate> = world.expected_menus.iter().map(|menu| menu.date).fold_first(|a, b| if a > b { a } else { b });
 
     assert!(menu_ids.len() > 0, "Dont use this step if no menus were previously persisted");
     assert!(earliest.is_some() && latest.is_some(), "All menus are lacking a serving date");
@@ -129,18 +133,27 @@ async fn no_other_menu_exist(world: &mut BistroWorld) {
     assert!(removed_ids.is_ok(), "A new menu should have been created");
 }
 
-impl RestPath<String> for PersistedMenu {
-    fn get_path(param: String) -> Result<String, Error> { Ok(format!("anything/{}", param)) }
-}
-
-#[when("I request the menu by its id")]
+#[when("I request this menu by its id")]
 async fn request_menu_by_id(world: &mut BistroWorld) {
-    assert_eq!(world.menus.len(), 1, "There are multiple menus known to the context");
+    assert_eq!(world.expected_menus.len(), 1, "There are multiple menus known to the context");
 
-    let menu = world.menus.first().unwrap();
+    let menu = world.expected_menus.first().unwrap();
     let mut client = RestClient::new("http://localhost:8001").unwrap();
-    let data: Result<PersistedMenu, _> = client.get(menu.id.clone());
+    let menu_result: Result<PersistedMenu, Error> = client.get(menu.id.clone());
 
-    assert!(data.is_ok(), format!("Expected a menu '{}' (id: {}) served at '{}'", menu.name, menu.id, menu.date));
-    // Todo the key is not found in database
+    assert!(menu_result.is_ok(), format!("Failed to request menu: {:?}", menu_result));
+
+    world.actual_menus.push(menu_result.unwrap());
 }
+
+#[then("I expect to receive this menu")]
+fn single_menu_is_present(world: &mut BistroWorld) {
+    assert_eq!(world.expected_menus.len(), world.actual_menus.len(), "The amount of expected menus and received menus differs");
+    assert_eq!(world.actual_menus.len(), 1, "Only a single menu is expected");
+
+    let expected_menu = world.expected_menus.first().unwrap();
+    let actual_menu = world.actual_menus.first().unwrap();
+
+    assert_eq!(actual_menu, expected_menu, "Actual and expected menu are not the same");
+}
+

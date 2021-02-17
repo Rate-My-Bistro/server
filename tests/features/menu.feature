@@ -5,7 +5,7 @@ Feature: Menu API
 
     Scenario: Fetch a menu by its id
         Given is the menu 'Test Menu' that is served at 2121-01-19
-        When I request the menu by its id
+        When I request this menu by its id
         Then I expect to receive this menu
 
     Scenario: Fetching menus by date range
