@@ -25,7 +25,7 @@ name = "cucumber"
 harness = false
 
 [dev-dependencies]
-cucumber_rust = { version = "0.8.2", features = ["macros"] }
+cucumber_rust = { version = "0.8", features = ["macros"] }
+restson = "0.7"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-isahc = { version = "1.1", features = ["json"] }
 toml = "0.5"

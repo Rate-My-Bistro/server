@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use cucumber_rust::{async_trait, World, WorldInit};
+use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, convert::Infallible};
 
 use crate::config::{CucumberConfig, parse_config};
@@ -7,6 +8,7 @@ use crate::config::{CucumberConfig, parse_config};
 /// Simplified representation of a
 /// bistro menu
 ///
+#[derive(Serialize,Deserialize,Debug)]
 pub struct PersistedMenu {
     pub id: String,
     pub name: String,

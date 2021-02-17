@@ -2,6 +2,7 @@ use arangors::{Database, Connection, AqlQuery, ClientError};
 use arangors::client::surf::SurfClient;
 use chrono::NaiveDate;
 use cucumber_rust::{when, given, gherkin};
+use restson::{Error, RestClient, RestPath};
 
 use crate::config::CucumberConfig;
 use crate::world::{BistroWorld, PersistedMenu};
@@ -18,7 +19,7 @@ async fn get_bistro_db(config: &CucumberConfig) -> Result<Database<SurfClient>, 
     establish_jwt(
         &config.database.url,
         &config.database.username,
-        &config.database.password
+        &config.database.password,
     ).await?
         .db(&config.database.name).await
 }
@@ -85,7 +86,7 @@ async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, ea
         .aql_query(aql).await
 }
 
-#[given(regex = r"^I got a menu '(.*)' served at (.*)$")]
+#[given(regex = r"^is the menu '(.*)' that is served at (.*)$")]
 async fn a_menu_is_served(world: &mut BistroWorld, name: String, served_at: String) {
     let inserted_menu_id = create_menu(&world.config, name.clone(), served_at.clone()).await;
 
@@ -94,11 +95,11 @@ async fn a_menu_is_served(world: &mut BistroWorld, name: String, served_at: Stri
     world.menus.push(PersistedMenu {
         name,
         id: inserted_menu_id.unwrap(),
-        date: NaiveDate::parse_from_str(&served_at, "%Y-%m-%d").unwrap()
+        date: NaiveDate::parse_from_str(&served_at, "%Y-%m-%d").unwrap(),
     });
 }
 
-#[given("I got the following list of menus")]
+#[given("is the following list of menus")]
 async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step) {
     for row in step.table().unwrap().rows.iter().skip(1) {
         let name = row[0].to_owned();
@@ -110,16 +111,16 @@ async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step
         world.menus.push(PersistedMenu {
             name,
             id: inserted_menu_id.unwrap(),
-            date: NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
+            date: NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap(),
         })
     }
 }
 
-#[given("No other menus exist (between/on) the given dates")]
+#[given("no other menus exist for the given dates (or in between)")]
 async fn no_other_menu_exist(world: &mut BistroWorld) {
     let menu_ids: Vec<String> = world.menus.iter().map(|menu| menu.id.clone()).collect();
-    let earliest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a < b { a } else { b });
-    let latest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a,b| if a > b { a } else { b });
+    let earliest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a, b| if a < b { a } else { b });
+    let latest: Option<NaiveDate> = world.menus.iter().map(|menu| menu.date).fold_first(|a, b| if a > b { a } else { b });
 
     assert!(menu_ids.len() > 0, "Dont use this step if no menus were previously persisted");
     assert!(earliest.is_some() && latest.is_some(), "All menus are lacking a serving date");
@@ -128,8 +129,18 @@ async fn no_other_menu_exist(world: &mut BistroWorld) {
     assert!(removed_ids.is_ok(), "A new menu should have been created");
 }
 
+impl RestPath<String> for PersistedMenu {
+    fn get_path(param: String) -> Result<String, Error> { Ok(format!("anything/{}", param)) }
+}
+
 #[when("I request the menu by its id")]
 async fn request_menu_by_id(world: &mut BistroWorld) {
     assert_eq!(world.menus.len(), 1, "There are multiple menus known to the context");
-    /// TODO
+
+    let menu = world.menus.first().unwrap();
+    let mut client = RestClient::new("http://localhost:8001").unwrap();
+    let data: Result<PersistedMenu, _> = client.get(menu.id.clone());
+
+    assert!(data.is_ok(), format!("Expected a menu '{}' (id: {}) served at '{}'", menu.name, menu.id, menu.date));
+    // Todo the key is not found in database
 }
