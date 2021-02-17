@@ -17,8 +17,8 @@ pub async fn get_all_menus(pool: ArangoPool, config: State<'_, AppConfig>) -> Ap
             json: json!(menus),
             status: Status::Ok,
         },
-        Err(_) => ApiResponse {
-            json: json!({"error": {"short": "Failed to query for menus", "long": "Database operation wasn't successful"}}),
+        Err(e) => ApiResponse {
+            json: json!({"error": {"short": "Failed to query for menus", "long": format!("Database operation wasn't successful: {:?}", e)}}),
             status: Status::InternalServerError,
         },
     }

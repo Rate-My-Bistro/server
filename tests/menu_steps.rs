@@ -40,10 +40,10 @@ async fn create_menu(config: &CucumberConfig, name: String, date: String) -> Res
                 name: @name,
                 date: @date,
                 price: 7.99,
-                low_kcal: true,
+                lowKcal: true,
                 image: "http://some.image/image.png",
-                mandatory_supplements: [{ name: "Schranke", price: 4.99 }],
-                optional_supplements: [
+                mandatorySupplements: [{ name: "Schranke", price: 4.99 }],
+                optionalSupplements: [
                     { name: "Pommes", price: 10.99 },
                     { name: "Salat", price: 2.85 }
                 ]

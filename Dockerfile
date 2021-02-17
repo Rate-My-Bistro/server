@@ -3,6 +3,7 @@ FROM ekidd/rust-musl-builder:nightly-2021-01-01 AS builder
 
 RUN sudo chown -R rust:rust /home/rust
 RUN mkdir src && touch src/lib.rs
+RUN mkdir tests && touch tests/cucumber.rs
 
 # Install and cache dependencies
 COPY Cargo.lock .
