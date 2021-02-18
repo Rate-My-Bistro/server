@@ -29,6 +29,11 @@ pub struct DateRange {
     pub to: NaiveDate
 }
 
+#[derive(Serialize,Deserialize,PartialEq,Eq,Debug,Clone)]
+pub struct FailureResponse {
+    pub status_code: u16
+}
+
 /// This World represents the testing context
 /// that is passed into each gherkin step
 ///
@@ -37,7 +42,8 @@ pub struct BistroWorld {
     pub config: CucumberConfig,
     pub expected_menus: Vec<PersistedMenu>,
     pub actual_menus: Vec<PersistedMenu>,
-    pub served_range: DateRange
+    pub served_range: Option<DateRange>,
+    pub expected_failure: Option<FailureResponse>
 }
 
 /// Creates a fresh test context for the
@@ -54,11 +60,8 @@ impl World for BistroWorld {
             config: parse_config(),
             expected_menus: vec![],
             actual_menus: vec![],
-            served_range: DateRange {
-                // TODO find a way to not set a range beforehand
-                from: NaiveDate::from_ymd(2000, 1, 1),
-                to: NaiveDate::from_ymd(2000, 1, 1)
-            }
+            expected_failure: None,
+            served_range: None
         })
     }
 }

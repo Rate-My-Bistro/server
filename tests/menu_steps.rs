@@ -5,7 +5,7 @@ use cucumber_rust::{given, when, then, gherkin};
 use restson::{Error, RestClient, RestPath};
 
 use crate::config::CucumberConfig;
-use crate::world::{BistroWorld, DateRange, PersistedMenu, PersistedMenus};
+use crate::world::{BistroWorld, DateRange, FailureResponse, PersistedMenu, PersistedMenus};
 
 /// RestClient implementation of the GET /menu/<id> route
 ///
@@ -99,6 +99,15 @@ async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, ea
         .aql_query(aql).await
 }
 
+#[given("is a menu not known to the system")]
+fn unknown_menus_are_served(world: &mut BistroWorld) {
+    world.expected_menus.push(PersistedMenu {
+        name: String::from("Unknown menu"),
+        id: String::from("this-is-an-unknown-id"),
+        date: NaiveDate::from_ymd(2021, 1, 10),
+    });
+}
+
 #[given(regex = r"^is the menu '(.*)' that is served at (.*)$")]
 async fn a_menu_is_served(world: &mut BistroWorld, name: String, served_at: String) {
     let insert_menu_result = create_menu(&world.config, name.clone(), served_at.clone()).await;
@@ -153,9 +162,13 @@ async fn request_menu_by_id(world: &mut BistroWorld) {
     let mut client = RestClient::new("http://localhost:8001").unwrap();
     let menu_result: Result<PersistedMenu, Error> = client.get(menu.id.clone());
 
-    assert!(menu_result.is_ok(), format!("Failed to request menu: {:?}", menu_result));
-
-    world.actual_menus.push(menu_result.unwrap());
+    match menu_result {
+        Ok(menus) => world.actual_menus.push(menus),
+        Err(Error::HttpError(status_code, _)) => {
+            world.expected_failure = Some(FailureResponse { status_code });
+        },
+        Err(_) => {}
+    }
 }
 
 #[when(regex = "I request menus between (.*) and (.*)")]
@@ -170,7 +183,7 @@ async fn request_menu_by_date_range(world: &mut BistroWorld, earliest_serving_da
     assert!(menus_result.is_ok(), format!("Failed to request menus: {:?}", menus_result));
 
     world.actual_menus.extend(menus_result.unwrap().0);
-    world.served_range = DateRange { from, to };
+    world.served_range = Some(DateRange { from, to });
 }
 
 #[then("I expect to receive this menu")]
@@ -186,8 +199,11 @@ fn single_menu_is_present(world: &mut BistroWorld) {
 
 #[then("I expect to receive all menus served between these two dates")]
 fn multiple_menus_are_present(world: &mut BistroWorld) {
+    assert!(world.served_range.is_some(), "No range was specified");
+
+    let served_range = world.served_range.clone().unwrap();
     let expected_menus = world.expected_menus.iter()
-        .filter(|menu| menu.date.ge(&world.served_range.from) && menu.date.le(&world.served_range.to))
+        .filter(|menu| menu.date.ge(&served_range.from) && menu.date.le(&served_range.to))
         .cloned()
         .collect::<Vec<PersistedMenu>>();
 
@@ -200,4 +216,12 @@ fn multiple_menus_are_present(world: &mut BistroWorld) {
 #[then("I expect to receive no menus")]
 fn no_menus_are_present(world: &mut BistroWorld) {
     assert_eq!(world.actual_menus.len(), 0, "The amount of expected menus and received menus differs");
+}
+
+#[then(regex = "I expect to receive a [0-9]* Response")]
+fn got_failure_response(world: &mut BistroWorld, status_code: u16) {
+    assert!(world.expected_failure.is_some(), "Expected the http response to report a failure");
+
+    let expected_failure = world.expected_failure.clone().unwrap();
+    assert_eq!(expected_failure.status_code, status_code, "Expected and actual status code don't match");
 }

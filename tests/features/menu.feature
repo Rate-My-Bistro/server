@@ -4,9 +4,14 @@ Feature: Menu API
     by using different parameters.
 
     Scenario: Fetch a menu by its id
-        Given is the menu 'Test Menu' that is served at 2121-01-17
+        Given is the menu 'Test Menu' that is served at 2121-01-16
         When I request this menu by its id
         Then I expect to receive this menu
+
+    Scenario: Fetch an unknown menu by id
+        Given is a menu not known to the system
+        When I request this menu by its id
+        Then I expect to receive a 'Not Found' Response
 
     Scenario: Fetch menus inside a date range
         Given is the following list of menus
