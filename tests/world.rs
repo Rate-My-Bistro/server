@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use cucumber_rust::{async_trait, World, WorldInit};
 use serde::{Deserialize, Serialize};
-use std::{cell::RefCell, convert::Infallible};
+use std::{convert::Infallible};
 
 use crate::config::{CucumberConfig, parse_config};
 
@@ -21,9 +21,6 @@ pub struct PersistedMenu {
 #[derive(WorldInit)]
 pub struct BistroWorld {
     pub config: CucumberConfig,
-    pub foo: String,
-    pub bar: usize,
-    pub some_value: RefCell<u8>,
     pub expected_menus: Vec<PersistedMenu>,
     pub actual_menus: Vec<PersistedMenu>
 }
@@ -39,10 +36,7 @@ impl World for BistroWorld {
 
     async fn new() -> Result<Self, Infallible> {
         Ok(Self {
-            bar: 0,
-            foo: "wat".into(),
             config: parse_config(),
-            some_value: RefCell::new(0),
             expected_menus: vec![],
             actual_menus: vec![]
         })

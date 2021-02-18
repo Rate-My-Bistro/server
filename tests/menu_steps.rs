@@ -146,6 +146,20 @@ async fn request_menu_by_id(world: &mut BistroWorld) {
     world.actual_menus.push(menu_result.unwrap());
 }
 
+// TODO get this fetcher working
+// #[when("I request menus between 2121-01-10 and 2121-01-31")]
+// async fn request_menu_by_id(world: &mut BistroWorld) {
+//     assert_eq!(world.expected_menus.len(), 1, "There are multiple menus known to the context");
+//
+//     let menu = world.expected_menus.first().unwrap();
+//     let mut client = RestClient::new("http://localhost:8001").unwrap();
+//     let menu_result: Result<PersistedMenu, Error> = client.get(menu.id.clone());
+//
+//     assert!(menu_result.is_ok(), format!("Failed to request menu: {:?}", menu_result));
+//
+//     world.actual_menus.push(menu_result.unwrap());
+// }
+
 #[then("I expect to receive this menu")]
 fn single_menu_is_present(world: &mut BistroWorld) {
     assert_eq!(world.expected_menus.len(), world.actual_menus.len(), "The amount of expected menus and received menus differs");

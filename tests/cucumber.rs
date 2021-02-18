@@ -1,4 +1,4 @@
-// I want it, I get it!
+// I want it, I get it! :-)
 #![feature(iterator_fold_self)]
 
 use cucumber_rust::{WorldInit};
