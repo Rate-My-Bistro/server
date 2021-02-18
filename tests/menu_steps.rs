@@ -5,11 +5,20 @@ use cucumber_rust::{given, when, then, gherkin};
 use restson::{Error, RestClient, RestPath};
 
 use crate::config::CucumberConfig;
-use crate::world::{BistroWorld, PersistedMenu};
+use crate::world::{BistroWorld, DateRange, PersistedMenu, PersistedMenus};
 
+/// RestClient implementation of the GET /menu/<id> route
+///
 impl RestPath<String> for PersistedMenu {
     fn get_path(param: String) -> Result<String, Error> { Ok(format!("menus/{}", param)) }
 }
+
+/// RestClient Implementation of the GET /menu?from=xxx&to=xxx route
+///
+impl RestPath<()> for PersistedMenus {
+    fn get_path(_: ()) -> Result<String, Error> { Ok(String::from("menus")) }
+}
+
 
 /// Either returns a new connection to arango db for the given
 /// configuration or it forwards an error if no connection could
@@ -92,32 +101,35 @@ async fn remove_unknown_menus(config: &CucumberConfig, menu_ids: Vec<String>, ea
 
 #[given(regex = r"^is the menu '(.*)' that is served at (.*)$")]
 async fn a_menu_is_served(world: &mut BistroWorld, name: String, served_at: String) {
-    let inserted_menu_id = create_menu(&world.config, name.clone(), served_at.clone()).await;
+    let insert_menu_result = create_menu(&world.config, name.clone(), served_at.clone()).await;
 
-    assert!(inserted_menu_id.is_ok(), "A new menu should have been created");
+    assert!(insert_menu_result.is_ok(), format!("The new menu could not be created: {:?}", insert_menu_result));
 
     world.expected_menus.push(PersistedMenu {
         name,
-        id: inserted_menu_id.unwrap(),
+        id: insert_menu_result.unwrap(),
         date: NaiveDate::parse_from_str(&served_at, "%Y-%m-%d").unwrap(),
     });
 }
 
 #[given("is the following list of menus")]
 async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step) {
-    for row in step.table().unwrap().rows.iter().skip(1) {
+    let rows = &step.table().unwrap().rows;
+    for row in rows.iter().skip(1) {
         let name = row[0].to_owned();
         let date = row[1].to_owned();
 
         let inserted_menu_id = create_menu(&world.config, name.clone(), date.clone()).await;
-        assert!(inserted_menu_id.is_ok(), "A new menu should have been created");
+        assert!(inserted_menu_id.is_ok(), format!("The new menu '{}' could not be created", name));
 
         world.expected_menus.push(PersistedMenu {
             name,
             id: inserted_menu_id.unwrap(),
             date: NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap(),
-        })
+        });
     }
+
+    assert_eq!(world.expected_menus.len(), rows.len() - 1, "The menu table is lacking entries");
 }
 
 #[given("no other menus exist for the given dates (or in between)")]
@@ -146,19 +158,20 @@ async fn request_menu_by_id(world: &mut BistroWorld) {
     world.actual_menus.push(menu_result.unwrap());
 }
 
-// TODO get this fetcher working
-// #[when("I request menus between 2121-01-10 and 2121-01-31")]
-// async fn request_menu_by_id(world: &mut BistroWorld) {
-//     assert_eq!(world.expected_menus.len(), 1, "There are multiple menus known to the context");
-//
-//     let menu = world.expected_menus.first().unwrap();
-//     let mut client = RestClient::new("http://localhost:8001").unwrap();
-//     let menu_result: Result<PersistedMenu, Error> = client.get(menu.id.clone());
-//
-//     assert!(menu_result.is_ok(), format!("Failed to request menu: {:?}", menu_result));
-//
-//     world.actual_menus.push(menu_result.unwrap());
-// }
+#[when(regex = "I request menus between (.*) and (.*)")]
+async fn request_menu_by_date_range(world: &mut BistroWorld, earliest_serving_date: String, latest_serving_date: String) {
+    let from = NaiveDate::parse_from_str(&*earliest_serving_date, "%Y-%m-%d").expect("Could not parse 'from' date");
+    let to = NaiveDate::parse_from_str(&*latest_serving_date, "%Y-%m-%d").expect("Could not parse 'to' date");
+
+    let query = vec![("from", &*earliest_serving_date), ("to", &*latest_serving_date)];
+    let mut client = RestClient::new("http://localhost:8001").unwrap();
+    let menus_result: Result<PersistedMenus, Error> = client.get_with((), &query);
+
+    assert!(menus_result.is_ok(), format!("Failed to request menus: {:?}", menus_result));
+
+    world.actual_menus.extend(menus_result.unwrap().0);
+    world.served_range = DateRange { from, to };
+}
 
 #[then("I expect to receive this menu")]
 fn single_menu_is_present(world: &mut BistroWorld) {
@@ -171,3 +184,20 @@ fn single_menu_is_present(world: &mut BistroWorld) {
     assert_eq!(actual_menu, expected_menu, "Actual and expected menu are not the same");
 }
 
+#[then("I expect to receive all menus served between these two dates")]
+fn multiple_menus_are_present(world: &mut BistroWorld) {
+    let expected_menus = world.expected_menus.iter()
+        .filter(|menu| menu.date.ge(&world.served_range.from) && menu.date.le(&world.served_range.to))
+        .cloned()
+        .collect::<Vec<PersistedMenu>>();
+
+    assert!(expected_menus.len() > 0);
+
+    assert_eq!(world.actual_menus.len(), expected_menus.len(), "The amount of expected menus and received menus differs");
+    assert_eq!(expected_menus, world.actual_menus, "Actual and expected menu are not the same");
+}
+
+#[then("I expect to receive no menus")]
+fn no_menus_are_present(world: &mut BistroWorld) {
+    assert_eq!(world.actual_menus.len(), 0, "The amount of expected menus and received menus differs");
+}

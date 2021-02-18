@@ -8,7 +8,11 @@ use rocket::http::{RawStr, Status};
 use rocket_contrib::json;
 use rocket::State;
 
-#[get("/")]
+/// Fetches all menus that exist in database - this handler is used for convenience
+///
+/// TechDebt: Remove this handler, when server hits production (see issue #TODO)
+///
+#[get("/?debug=all")]
 pub async fn get_all_menus(pool: ArangoPool, config: State<'_, AppConfig>) -> ApiResponse {
     let menu_result = query_all_menus(pool, config.inner()).await;
 
@@ -24,6 +28,11 @@ pub async fn get_all_menus(pool: ArangoPool, config: State<'_, AppConfig>) -> Ap
     }
 }
 
+/// Fetches Menus using an inclusive date range
+///
+/// If no menus are found, then an empty list will be sent back.
+/// The handler always expects both a from AND a to param to be set.
+///
 #[get("/?<from>&<to>")]
 pub async fn get_all_menus_by_date_range(
     from: DateQueryParam,
@@ -45,6 +54,10 @@ pub async fn get_all_menus_by_date_range(
     }
 }
 
+/// Fetches a menu by its id
+///
+/// This identifier represents the _key of the menu set in database
+///
 #[get("/<menu_id>")]
 pub async fn get_menu_by_id(menu_id: &RawStr, pool: ArangoPool, config: State<'_, AppConfig>) -> ApiResponse {
     let menu_result = query_menu_by_id(menu_id, pool, config.inner()).await;
