@@ -188,7 +188,7 @@ async fn request_menu_by_date_range(world: &mut BistroWorld, earliest_serving_da
 
 #[then("I expect to receive this menu")]
 fn single_menu_is_present(world: &mut BistroWorld) {
-    assert_eq!(world.expected_menus.len(), world.actual_menus.len(), "The amount of expected menus and received menus differs");
+    assert_eq!(world.actual_menus.len(), world.expected_menus.len(), "The amount of expected menus and received menus differs");
     assert_eq!(world.actual_menus.len(), 1, "Only a single menu is expected");
 
     let expected_menu = world.expected_menus.first().unwrap();
@@ -210,7 +210,7 @@ fn multiple_menus_are_present(world: &mut BistroWorld) {
     assert!(expected_menus.len() > 0);
 
     assert_eq!(world.actual_menus.len(), expected_menus.len(), "The amount of expected menus and received menus differs");
-    assert_eq!(expected_menus, world.actual_menus, "Actual and expected menu are not the same");
+    assert_eq!(world.actual_menus, expected_menus, "Actual and expected menu are not the same");
 }
 
 #[then("I expect to receive no menus")]
@@ -218,7 +218,7 @@ fn no_menus_are_present(world: &mut BistroWorld) {
     assert_eq!(world.actual_menus.len(), 0, "The amount of expected menus and received menus differs");
 }
 
-#[then(regex = "I expect to receive a [0-9]* Response")]
+#[then(regex = r"I expect to receive a (\d+) code in response")]
 fn got_failure_response(world: &mut BistroWorld, status_code: u16) {
     assert!(world.expected_failure.is_some(), "Expected the http response to report a failure");
 

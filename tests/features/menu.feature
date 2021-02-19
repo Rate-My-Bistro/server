@@ -11,7 +11,7 @@ Feature: Menu API
     Scenario: Fetch an unknown menu by id
         Given is a menu not known to the system
         When I request this menu by its id
-        Then I expect to receive a 'Not Found' Response
+        Then I expect to receive a 404 code in response
 
     Scenario: Fetch menus inside a date range
         Given is the following list of menus

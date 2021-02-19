@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{convert::Infallible};
 
 use crate::config::{CucumberConfig, parse_config};
+use std::collections::HashMap;
 
 /// Simplified representation of a list of
 /// bistro menus
@@ -43,7 +44,8 @@ pub struct BistroWorld {
     pub expected_menus: Vec<PersistedMenu>,
     pub actual_menus: Vec<PersistedMenu>,
     pub served_range: Option<DateRange>,
-    pub expected_failure: Option<FailureResponse>
+    pub expected_failure: Option<FailureResponse>,
+    pub expected_routes: Option<HashMap<String, Vec<String>>>
 }
 
 /// Creates a fresh test context for the
@@ -58,10 +60,11 @@ impl World for BistroWorld {
     async fn new() -> Result<Self, Infallible> {
         Ok(Self {
             config: parse_config(),
-            expected_menus: vec![],
             actual_menus: vec![],
+            served_range: None,
             expected_failure: None,
-            served_range: None
+            expected_menus: vec![],
+            expected_routes: None
         })
     }
 }

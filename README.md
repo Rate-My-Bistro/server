@@ -1,18 +1,24 @@
 # Rate My Bistro: Server
 
-This Service provides a REST API to serve the `Rate My Bistro: App`.
+This Service provides an API to serve the `Rate My Bistro: App`.
+In more detail, it lets users manage their account, requests bistro menus
+and accepts additional information for these menus (e.g. a rating).
 
 ## 1 Architecture Decision Records
 
-| No | Record                                            |
-| -- | :------------------------------------------------ |
-| 1  | Use Rust to implement the Server                  |
-| 2  | Use Rocket.rs as Service Framework                |
-| 3  | Use ArangoDb for Persistence                      |
-| 4  | Separate Service into domains                     |
-| 5  | Use the BDD framework cucumber for testing        |
-| 6  | Decouple tests from web framework (avoid lock in) |
-| 7  | TODO AUTH IMPL                                    |
+The following decision were made with the Rate-My-Bistro team.
+The Api Server has to comply with these records at any time.
+
+| No | Record                                                |
+| -- | :---------------------------------------------------- |
+| 1  | Use Rust to implement the Server                      |
+| 2  | Use Rocket.rs as Service Framework                    |
+| 3  | Use ArangoDb for Persistence                          |
+| 4  | Separate Service into domains                         |
+| 5  | Use behavior driven testing and spare with unit tests |
+| 6  | Decouple tests from web framework (avoid lock in)     |
+| 7  | TODO AUTH                                             |
+
 
 ## 2 Prerequisites
 
@@ -55,7 +61,13 @@ cargo test --test cucumber
 | src/menu/       | Handlers to provide menu information      |
 | tests/          | BDD tests                                 |
 
-## 5 Contribution
+## 6 Domains
+
+| Domain          | Core Functionality                           |
+| :-------------- | :------------------------------------------- |
+| Menu            | Represents a meal with a list of side dishes |
+
+## 7 Contribution
 
 Before you start contributing, read the following infos:
 

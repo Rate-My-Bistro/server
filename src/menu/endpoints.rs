@@ -69,7 +69,7 @@ pub async fn get_menu_by_id(menu_id: &RawStr, pool: ArangoPool, config: State<'_
         },
         Err(_) => ApiResponse {
             json: json!({"error": {"short": format!("No menu found for id '{}'", menu_id), "long": "Given id is not related to any known menu"}}),
-            status: Status::BadRequest,
+            status: Status::NotFound,
         },
     }
 }
