@@ -6,8 +6,8 @@ port = 8001
 database_username = "bistrouser"
 database_password = "bistropassword"
 database_use_jwt = false
-# TODO: Rename to database_name
-database_collection = "bistro"
+database_name = "bistro"
+database_menu_collection = "menus"
 
 [debug]
 workers = 1

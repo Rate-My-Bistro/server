@@ -2,30 +2,52 @@ use mobc::Pool;
 use mobc_arangors::ArangoDBConnectionManager;
 use rocket::request::{FromRequest, Outcome};
 use rocket::{Request, Rocket};
-use std::ops::Deref;
 use crate::config::AppConfig;
 use rocket::http::Status;
+use arangors::client::surf::SurfClient;
+use arangors::Database;
 
-pub struct ArangoPool(Pool<ArangoDBConnectionManager>);
+/// Pooled arango db connection including
+/// an additional config used for different
+/// collections and further settings
+///
+/// A connection can be retrieved in every
+/// handler that adds this interface to its
+/// method params
+///
+pub struct ArangoDb {
+    pub db: Database<SurfClient>,
+    pub config: ArangoConfig
+}
 
-impl Deref for ArangoPool {
-    type Target = Pool<ArangoDBConnectionManager>;
-    fn deref(&self) -> &Pool<ArangoDBConnectionManager> {
-        &self.0
-    }
+#[derive(Clone, Debug)]
+pub struct ArangoConfig {
+    pub menu_collection: String
+}
+
+/// TODO Catch any error inside here
+///
+async fn retrieve_db(pool: &Pool<ArangoDBConnectionManager>, database_name: &String, menu_collection_name: &String) -> ArangoDb {
+    let client = &*pool.get().await.unwrap();
+    let db = client.db(&database_name).await.unwrap();
+
+    ArangoDb { db, config: ArangoConfig { menu_collection: menu_collection_name.clone() } }
 }
 
 #[async_trait]
-impl<'a, 'r> FromRequest<'a, 'r> for ArangoPool {
+impl<'a, 'r> FromRequest<'a, 'r> for ArangoDb {
     type Error = ();
 
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        match request.managed_state::<Pool<ArangoDBConnectionManager>>() {
-            Some(pool) => Outcome::Success(ArangoPool(pool.clone())),
-            None => {
-                error_!("Missing database fairing for arango");
-                Outcome::Failure((Status::InternalServerError, ()))
-            }
+        let maybe_config = request.managed_state::<AppConfig>();
+        let maybe_pool = request.managed_state::<Pool<ArangoDBConnectionManager>>();
+
+        match (maybe_config, maybe_pool) {
+            (Some(config), Some(pool)) => Outcome::Success(
+                retrieve_db(pool, &config.database_name, &config.database_menu_collection).await
+            ),
+
+            _ => Outcome::Failure((Status::InternalServerError, ()))
         }
     }
 }

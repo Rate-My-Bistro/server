@@ -13,7 +13,6 @@ pub struct DateRangeQueryParam {
     pub to: NaiveDate
 }
 
-
 impl<'v> FromQuery<'v> for DateRangeQueryParam {
     type Error = &'static str;
 

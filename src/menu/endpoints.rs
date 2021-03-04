@@ -1,20 +1,18 @@
-use crate::config::AppConfig;
 use crate::menu::repository::{query_all_menus, query_menu_by_id, query_menus_by_range};
 use crate::middleware::api_response::ApiResponse;
-use crate::middleware::arango_pool::ArangoPool;
+use crate::middleware::arango_pool::{ArangoDb};
 use crate::middleware::date_query::{DateRangeQueryParam};
 
 use rocket::http::{RawStr, Status};
 use rocket_contrib::json;
-use rocket::State;
 
 /// Fetches all menus that exist in database - this handler is used for convenience
 ///
 /// TechDebt: Remove this handler, when server hits production (see issue #TODO)
 ///
 #[get("/?debug=all")]
-pub async fn get_all_menus(pool: ArangoPool, config: State<'_, AppConfig>) -> ApiResponse {
-    let menu_result = query_all_menus(pool, config.inner()).await;
+pub async fn get_all_menus(db: ArangoDb) -> ApiResponse {
+    let menu_result = query_all_menus(db.db, db.config).await;
 
     match menu_result {
         Ok(menus) => ApiResponse {
@@ -38,10 +36,9 @@ pub async fn get_all_menus(pool: ArangoPool, config: State<'_, AppConfig>) -> Ap
 #[get("/?<range..>")]
 pub async fn get_all_menus_by_date_range(
     range: DateRangeQueryParam,
-    pool: ArangoPool,
-    config: State<'_, AppConfig>
+    db: ArangoDb
 ) -> ApiResponse {
-    let menu_result = query_menus_by_range(range.from, range.to, pool, config.inner()).await;
+    let menu_result = query_menus_by_range(range.from, range.to, db.db, db.config).await;
 
     match menu_result {
         Ok(menus) => ApiResponse {
@@ -60,8 +57,8 @@ pub async fn get_all_menus_by_date_range(
 /// This identifier represents the _key of the menu set in database
 ///
 #[get("/<menu_id>")]
-pub async fn get_menu_by_id(menu_id: &RawStr, pool: ArangoPool, config: State<'_, AppConfig>) -> ApiResponse {
-    let menu_result = query_menu_by_id(menu_id, pool, config.inner()).await;
+pub async fn get_menu_by_id(menu_id: &RawStr, db: ArangoDb) -> ApiResponse {
+    let menu_result = query_menu_by_id(menu_id, db.db, db.config).await;
 
     match menu_result {
         Ok(menu) => ApiResponse {

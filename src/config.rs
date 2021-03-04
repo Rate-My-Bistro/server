@@ -10,5 +10,6 @@ pub struct AppConfig {
     pub database_username: String,
     pub database_password: String,
     pub database_use_jwt: bool,
-    pub database_collection: String
+    pub database_name: String,
+    pub database_menu_collection: String
 }

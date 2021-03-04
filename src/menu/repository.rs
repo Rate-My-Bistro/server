@@ -3,46 +3,45 @@ extern crate arangors;
 use self::arangors::client::surf::SurfClient;
 use self::arangors::ClientError;
 use crate::menu::entity::Menu;
-use crate::middleware::arango_pool::ArangoPool;
+use crate::middleware::arango_pool::{ArangoConfig};
 use arangors::{AqlQuery, Database};
 use chrono::NaiveDate;
-use crate::config::AppConfig;
 
-async fn get_connection(pool: ArangoPool, config: &AppConfig) -> Database<SurfClient> {
-    let client = &*pool.get().await.unwrap();
-    let db = client.db(&*config.database_collection).await.unwrap();
+/// Queries all menus that exist inside the menu collection
+///
+pub async fn query_all_menus(db: Database<SurfClient>, config: ArangoConfig) -> Result<Vec<Menu>, ClientError> {
+    let aql = AqlQuery::builder()
+        .query("FOR menu IN @@collection RETURN menu")
+        .bind_var("@collection", config.menu_collection)
+        .build();
 
-    db
+    db.aql_query(aql).await
 }
 
-pub async fn query_all_menus(pool: ArangoPool, config: &AppConfig) -> Result<Vec<Menu>, ClientError> {
-    get_connection(pool, config)
-        .await
-        .aql_str("FOR menu IN menus RETURN menu")
-        .await
-}
-
+/// Queries menus that are served within the given time range
+/// Returns an empty list of no menu is found
+///
 pub async fn query_menus_by_range(
     from: NaiveDate,
     to: NaiveDate,
-    pool: ArangoPool,
-    config: &AppConfig
+    db: Database<SurfClient>,
+    config: ArangoConfig
 ) -> Result<Vec<Menu>, ClientError> {
     let aql = AqlQuery::builder()
-        .query(
-            "FOR menu IN @@collection FILTER menu.date >= @from AND menu.date <= @to RETURN menu",
-        )
-        .bind_var("@collection", "menus")
+        .query("FOR menu IN @@collection FILTER menu.date >= @from AND menu.date <= @to RETURN menu")
+        .bind_var("@collection", config.menu_collection)
         .bind_var("from", from.to_string())
         .bind_var("to", to.to_string())
         .build();
 
-    get_connection(pool, config).await.aql_query(aql).await
+    db.aql_query(aql).await
 }
 
-pub async fn query_menu_by_id(id: &str, pool: ArangoPool, config: &AppConfig) -> Result<Menu, ClientError> {
-    let db = get_connection(pool, config).await;
-    let collection = db.collection("menus").await.unwrap();
+/// Queries a single menu by its id
+/// Forwards a client error, if no menu is found
+///
+pub async fn query_menu_by_id(id: &str, db: Database<SurfClient>, config: ArangoConfig) -> Result<Menu, ClientError> {
+    let collection = db.collection(&config.menu_collection).await.unwrap();
     let response = collection.document(id).await;
 
     match response {
