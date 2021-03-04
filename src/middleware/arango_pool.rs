@@ -25,13 +25,14 @@ pub struct ArangoConfig {
     pub menu_collection: String
 }
 
-/// TODO Catch any error inside here
+/// Retrieves a new database connection from pool and select the given database.
+/// It aggregates the result with all relevant database configurations.
 ///
-async fn retrieve_db(pool: &Pool<ArangoDBConnectionManager>, database_name: &String, menu_collection_name: &String) -> ArangoDb {
-    let client = &*pool.get().await.unwrap();
-    let db = client.db(&database_name).await.unwrap();
+async fn retrieve_db(pool: &Pool<ArangoDBConnectionManager>, database_name: &String, menu_collection_name: &String) -> Result<ArangoDb, &'static str> {
+    let client = &*pool.get().await.map_err(|_| "Could not retrieve an arango connection")?;
+    let db = client.db(&database_name).await.map_err(|_| "Could not select arango database from connection")?;
 
-    ArangoDb { db, config: ArangoConfig { menu_collection: menu_collection_name.clone() } }
+    Ok(ArangoDb { db, config: ArangoConfig { menu_collection: menu_collection_name.clone() } })
 }
 
 #[async_trait]
@@ -43,9 +44,13 @@ impl<'a, 'r> FromRequest<'a, 'r> for ArangoDb {
         let maybe_pool = request.managed_state::<Pool<ArangoDBConnectionManager>>();
 
         match (maybe_config, maybe_pool) {
-            (Some(config), Some(pool)) => Outcome::Success(
-                retrieve_db(pool, &config.database_name, &config.database_menu_collection).await
-            ),
+            (Some(config), Some(pool)) =>
+                retrieve_db(pool, &config.database_name, &config.database_menu_collection)
+                .await
+                .map_or(
+                    Outcome::Failure((Status::InternalServerError, ())),
+                    |db| Outcome::Success(db)
+                ),
 
             _ => Outcome::Failure((Status::InternalServerError, ()))
         }
