@@ -33,6 +33,8 @@ pub async fn get_all_menus(pool: ArangoPool, config: State<'_, AppConfig>) -> Ap
 /// If no menus are found, then an empty list will be sent back.
 /// The handler always expects both a from AND a to param to be set.
 ///
+/// Todo from and to should be combined --> max range == 7 days as restriction
+///
 #[get("/?<from>&<to>")]
 pub async fn get_all_menus_by_date_range(
     from: DateQueryParam,

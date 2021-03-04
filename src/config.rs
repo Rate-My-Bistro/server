@@ -1,5 +1,9 @@
 use serde::Deserialize;
 
+/// Application wide configuration that
+/// allows the server to run on various
+/// stages with different settings.
+///
 #[derive(Deserialize)]
 pub struct AppConfig {
     pub database_url: String,
