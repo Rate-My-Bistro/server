@@ -3,7 +3,7 @@ use crate::middleware::api_response::ApiResponse;
 use crate::middleware::arango_pool::{ArangoDb};
 use crate::middleware::date_query::{DateRangeQueryParam};
 
-use rocket::http::{RawStr, Status};
+use rocket::http::{Status};
 use rocket_contrib::json;
 
 /// Fetches all menus that exist in database - this handler is used for convenience
@@ -57,7 +57,7 @@ pub async fn get_all_menus_by_date_range(
 /// This identifier represents the _key of the menu set in database
 ///
 #[get("/<menu_id>")]
-pub async fn get_menu_by_id(menu_id: &RawStr, db: ArangoDb) -> ApiResponse {
+pub async fn get_menu_by_id(menu_id: &str, db: ArangoDb) -> ApiResponse {
     let menu_result = query_menu_by_id(menu_id, db.db, db.config).await;
 
     match menu_result {

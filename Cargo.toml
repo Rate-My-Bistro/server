@@ -19,6 +19,7 @@ mobc = "0.7"
 rocket = { git = "https://github.com/SergioBenitez/Rocket" }
 rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket" }
 serde = { version = "1.0", features = ["derive"] }
+time = "0.2"
 
 [[test]]
 name = "cucumber"

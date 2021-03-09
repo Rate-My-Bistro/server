@@ -1,5 +1,6 @@
-use chrono::NaiveDate;
-use rocket::request::{FromQuery, Query};
+use rocket::form::{self, Error};
+use time::{Date};
+
 
 /// Query Parameter for a date range
 ///
@@ -7,31 +8,17 @@ use rocket::request::{FromQuery, Query};
 /// query param is set. If one of these dates cannot be parsed
 /// with the format 'YYYY-MM-DD', then no date range can be used.
 ///
-#[derive(Copy, Clone, Debug)]
+#[derive(FromForm)]
 pub struct DateRangeQueryParam {
-    pub from: NaiveDate,
-    pub to: NaiveDate
+    #[field(validate = is_date_range(&self.to))]
+    pub from: Date,
+    pub to: Date
 }
 
-impl<'v> FromQuery<'v> for DateRangeQueryParam {
-    type Error = &'static str;
-
-    fn from_query(query: Query<'v>) -> Result<Self, Self::Error> {
-        let (from_param, to_param) = query
-            .fold((None, None), |(from, to), curr| {
-                match curr.key.as_str() {
-                     "from" => (Some(curr), to),
-                    "to" => (from, Some(curr)),
-                    _ => (from, to)
-                }
-            });
-
-        let from = from_param.ok_or("Query param 'from' is missing")?.value.url_decode().map_err(|_| "Query param 'from' is malformed")?;
-        let to = to_param.ok_or("Query param 'to' is missing")?.value.url_decode().map_err(|_| "Query param 'to' is malformed")?;
-
-        Ok(DateRangeQueryParam {
-            from: NaiveDate::parse_from_str(&from, "%Y-%m-%d").map_err(|_| "Query param 'from' has to be in format YYYY-MM-DD")?,
-            to: NaiveDate::parse_from_str(&to, "%Y-%m-%d").map_err(|_| "Query param 'from' has to be in format YYYY-MM-DD")?,
-        })
+fn is_date_range<'v>(from: &time::Date, to: &time::Date) -> form::Result<'v, ()> {
+    if from.gt(to) {
+        Err(Error::validation("'From' has to be earlier than 'to'"))?;
     }
+
+    Ok(())
 }

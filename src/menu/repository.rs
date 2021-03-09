@@ -5,7 +5,7 @@ use self::arangors::ClientError;
 use crate::menu::entity::Menu;
 use crate::middleware::arango_pool::{ArangoConfig};
 use arangors::{AqlQuery, Database};
-use chrono::NaiveDate;
+use time::Date;
 
 /// Queries all menus that exist inside the menu collection
 ///
@@ -22,8 +22,8 @@ pub async fn query_all_menus(db: Database<SurfClient>, config: ArangoConfig) -> 
 /// Returns an empty list of no menu is found
 ///
 pub async fn query_menus_by_range(
-    from: NaiveDate,
-    to: NaiveDate,
+    from: Date,
+    to: Date,
     db: Database<SurfClient>,
     config: ArangoConfig
 ) -> Result<Vec<Menu>, ClientError> {
