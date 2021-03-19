@@ -3,8 +3,8 @@ use rocket::response::Responder;
 use rocket::{response, Request, Response};
 use rocket_contrib::json::JsonValue;
 
-/// Generic data model for all api responses
-/// It is split into the json body and a http
+/// Generic data model for all API responses
+/// It is split into the JSON body and a HTTP
 /// status code
 ///
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub struct ApiResponse {
 
 /// Implementation of the responder trait for
 /// bistro API responses. It always expects
-/// an http status code and a json body.
+/// an HTTP status code and a JSON body.
 ///
 impl<'r> Responder<'r, 'static> for ApiResponse {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {

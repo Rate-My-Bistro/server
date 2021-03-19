@@ -19,7 +19,7 @@ pub async fn query_all_menus(db: Database<SurfClient>, config: ArangoConfig) -> 
 }
 
 /// Queries menus that are served within the given time range
-/// Returns an empty list of no menu is found
+/// Returns an empty list if no menu is found
 ///
 pub async fn query_menus_by_range(
     from: Date,

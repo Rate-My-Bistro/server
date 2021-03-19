@@ -80,9 +80,9 @@ fn route_not_found(req: &Request) -> ApiResponse {
 /// the API server.
 ///
 /// Each handler will respond with the ApiResponse, that
-/// is building a Rest response in the background. The
+/// is building a REST response in the background. The
 /// status code of the API response is mapped into an
-/// http status code und the JSON is used as the
+/// http status code and the JSON is used as the
 /// response payload.
 ///
 #[get("/")]
