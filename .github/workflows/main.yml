@@ -1,0 +1,59 @@
+
+name: CI
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      database:
+        image: ghcr.io/rate-my-bistro/database:latest
+        ports:
+          - 8529:8529
+        env:
+          ARANGO_RANDOM_ROOT_PASSWORD: 1
+          ARANGO_DB_NAME: bistro
+          ARANGO_DB_USER: bistrouser
+          ARANGO_DB_PASSWORD: bistropassword
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: nightly
+      - run: cargo build
+      - run: cargo test --test cucumber
+      
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      release_tag: ${{steps.version_bump.outputs.new_tag}}
+    steps:
+      - uses: actions/checkout@v2      
+      - name: Github Tag Bump
+        id: version_bump
+        uses: anothrNick/github-tag-action@1.34.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          
+  push:
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - uses: actions/checkout@v2      
+      - run: echo ${GITHUB_REF}
+      - name: Login to Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to ghcr.io
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/rate-my-bistro/server:latest, ghcr.io/rate-my-bistro/server:${{ needs.release.outputs.release_tag }} 
