@@ -22,6 +22,7 @@ jobs:
       - uses: ATiltedTree/setup-rust@v1
         with:
           rust-version: nightly
+      - run: cargo build
       - run: | 
           cargo run &
           cargo test --test cucumber 
