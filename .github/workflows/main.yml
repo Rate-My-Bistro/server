@@ -45,16 +45,16 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v2      
-      - run: echo ${GITHUB_REF}
       - name: Login to Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+        
       - name: Push to ghcr.io
         uses: docker/build-push-action@v2
         with:
+          context: .
           push: true
           tags: ghcr.io/rate-my-bistro/server:latest, ghcr.io/rate-my-bistro/server:${{ needs.release.outputs.release_tag }} 
