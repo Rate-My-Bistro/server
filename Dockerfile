@@ -1,5 +1,5 @@
 # Build Image
-FROM ekidd/rust-musl-builder:nightly-2021-01-01 AS builder
+FROM ekidd/rust-musl-builder:nightly-2021-02-13 AS builder
 
 RUN sudo chown -R rust:rust /home/rust
 RUN mkdir src && touch src/lib.rs

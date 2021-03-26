@@ -1,6 +1,3 @@
-// I want it, I get it! :-)
-#![feature(iterator_fold_self)]
-
 //!
 //! In order to prove the proper working of all requested features,
 //! these behavior driven tests cases provide a set of scenarios.

@@ -144,8 +144,8 @@ async fn a_list_of_menus_is_served(world: &mut BistroWorld, step: &gherkin::Step
 #[given("no other menus exist for the given dates (or in between)")]
 async fn no_other_menu_exist(world: &mut BistroWorld) {
     let menu_ids: Vec<String> = world.expected_menus.iter().map(|menu| menu.id.clone()).collect();
-    let earliest: Option<NaiveDate> = world.expected_menus.iter().map(|menu| menu.date).fold_first(|a, b| if a < b { a } else { b });
-    let latest: Option<NaiveDate> = world.expected_menus.iter().map(|menu| menu.date).fold_first(|a, b| if a > b { a } else { b });
+    let earliest: Option<NaiveDate> = world.expected_menus.iter().map(|menu| menu.date).reduce(|a, b| if a < b { a } else { b });
+    let latest: Option<NaiveDate> = world.expected_menus.iter().map(|menu| menu.date).reduce(|a, b| if a > b { a } else { b });
 
     assert!(menu_ids.len() > 0, "Dont use this step if no menus were previously persisted");
     assert!(earliest.is_some() && latest.is_some(), "All menus are lacking a serving date");
