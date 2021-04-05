@@ -19,9 +19,11 @@ jobs:
           ARANGO_DB_PASSWORD: bistropassword
     steps:
       - uses: actions/checkout@v2
-      - uses: ATiltedTree/setup-rust@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          rust-version: nightly
+          profile: minimal
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@v1
       - run: cargo build
       - run: | 
           cargo run &
@@ -51,7 +53,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@v1
+      - run: cargo build
       - name: Push to ghcr.io
         uses: docker/build-push-action@v2
         with:
